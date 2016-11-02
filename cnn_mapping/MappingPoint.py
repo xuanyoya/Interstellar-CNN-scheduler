@@ -30,12 +30,15 @@ class MappingPoint(object):
         '''
         Loop order of the given level buffer.
 
-        A tuple with operand type enum from inside loop to outside loop.
+        A tuple with loop enum from inside loop to outside loop.
 
-        E.g., (FIL, IFM, OFM) means a loop structure as:
-            for ofmap
-                for ifmap
-                    for filter
+        E.g., (FX, FY, OX, OY, OC, IC) means a loop structure as:
+            for ic
+              for oc
+                for oy
+                  for ox
+                    for fy
+                      for fx
                         ...
         '''
         return self.loop_orders[level]
@@ -44,9 +47,9 @@ class MappingPoint(object):
         '''
         Loop blocking factors of the given level buffer.
 
-        A tuple with factor for each operand type in enum order.
+        A tuple with factor for each loop enum in enum order.
 
-        E.g., blocking factor for FIL is blocking[FIL].
+        E.g., blocking factor for OC loop is blocking[OC].
         '''
         return self.loop_blockings[level]
 
@@ -54,9 +57,9 @@ class MappingPoint(object):
         '''
         Loop partitioning factors of the given index parallelism.
 
-        A tuple with factor for each operand type in enum order.
+        A tuple with factor for each loop enum in enum order.
 
-        E.g., partitioning factor for FIL is partitioning[FIL].
+        E.g., partitioning factor for OC loop is partitioning[OC].
         '''
         return self.loop_partitionings[idx]
 

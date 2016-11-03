@@ -2,4 +2,7 @@
 cnn_mapping package
 '''
 
-__all__ = ["CostModel", "MappingPoint", "Resource", "LoopEnum"]
+from .MappingPoint import MappingPoint
+from .Resource import Resource
+import CostModel
+

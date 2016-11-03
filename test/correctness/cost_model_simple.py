@@ -2,9 +2,7 @@
 Simple test case for checking get_cost
 '''
 import unittest
-from cnn_mapping.MappingPoint import MappingPoint 
-from cnn_mapping.Resource import Resource
-from cnn_mapping import CostModel 
+import cnn_mapping as cm 
 
 class TestCostModel(unittest.TestCase):
 
@@ -20,9 +18,9 @@ class TestCostModel(unittest.TestCase):
         loop_blockings_list = [(3, 1, 1, 1,), (3, 1, 1, 1,), (1, 4, 1, 1,), (1, 4, 1, 1,), (1, 1, 32, 1), (1, 1, 1, 4)]
         loop_partitionings_list = [(1, 1, 1, 1), (1, 1, 1, 1), (1, 2, 1, 1,), (1, 2, 1, 1), (1, 1, 1, 1), (1, 1, 1, 16)]
 
-        point = MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
-        resource = Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, para_shared_level_list)
-        cost = CostModel.get_cost(resource, point)
+        point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, para_shared_level_list)
+        cost = cm.CostModel.get_cost(resource, point)
         print cost
 
 if __name__ == '__main__':

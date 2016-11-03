@@ -1,15 +1,16 @@
 '''
 Loop enum type.
 
-Loops include output channel (OC), input channel (IC), output width (OX),
-output height (OY), filter width (FX), filter height (FY).
+Loops include filter width (FX), filter height (FY), 
+output width (OX), output height (OY),
+output channel (OC), input channel (IC).
 '''
 
-OC = 0
-IC = 1
+FX = 0
+FY = 1
 OX = 2
 OY = 3
-FX = 4
-FY = 5
+OC = 4
+IC = 5
 NUM = 6
 

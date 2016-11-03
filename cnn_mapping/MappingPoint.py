@@ -11,11 +11,11 @@ class MappingPoint(object):
     parallel units, etc.
 
     Each loop order and each set of loop blocking factors are corresponding to
-    each buffer level, because it does not make much sense to block more than
-    once at a single buffer level.
+    each loop at all buffer levels, because it does not make much sense to block 
+    more than once at a single buffer level.
 
-    Each set of loop partitioning factors is corresponding to each parallelism
-    level.
+    Each set of loop partitioning factors is corresponding to number of parallelism of
+    each loop at all all levels.
     '''
 
     def __init__(self, loop_order_list, loop_blockings_list,
@@ -26,40 +26,56 @@ class MappingPoint(object):
         self.loop_blockings = loop_blockings_list
         self.loop_partitionings = loop_partitionings_list
 
-    def loop_order(self, level):
+    def loop_order(self, loop):
         '''
-        Loop order of the given level buffer.
+        Loop order of the given loop.
 
-        A tuple with loop enum from inside loop to outside loop.
+        A tuple with loop index for each level, 
+        with smaller index corresponding to inner loop.
+
+        Tuples are organized as the same order as loop enum order.
 
         E.g., (FX, FY, OX, OY, OC, IC) means a loop structure as:
-            for ic
-              for oc
-                for oy
-                  for ox
+        E.g., [(0, 0), (1, 1), (2, 4), (3, 5), (4, 3), (5, 2)]
+        means a loop structure as:
+            for oy
+              for ox
+                for oc
+                  for ic
                     for fy
                       for fx
-                        ...
+
+                        for ic
+                          for oc
+                            for oy
+                              for ox
+                                for fy
+                                  for fx
+                                    ...
         '''
-        return self.loop_orders[level]
+        return self.loop_orders[loop]
 
-    def loop_blocking(self, level):
+    def loop_blocking(self, loop):
         '''
-        Loop blocking factors of the given level buffer.
+        Loop blocking factors of the given loop.
 
-        A tuple with factor for each loop enum in enum order.
+        A tuple with factor for each level from inside loop to 
+        outside loop.
 
-        E.g., blocking factor for OC loop is blocking[OC].
+        Tuples are organized as the same order as loop enum order.
+
+        E.g., blocking factor at buffer level l is blocking[l].
         '''
-        return self.loop_blockings[level]
+        return self.loop_blockings[loop]
 
-    def loop_partitioning(self, idx):
+    def loop_partitioning(self, loop):
         '''
-        Loop partitioning factors of the given index parallelism.
+        Loop partitioning factors of the given loop. 
 
-        A tuple with factor for each loop enum in enum order.
+        A tuple with factor for each level from inside loop to outside loop.
 
-        E.g., partitioning factor for OC loop is partitioning[OC].
+        Tuples are organized as the same order as loop enum order.
+
+        E.g., partitioning factor at level l is partitioning[l].
         '''
-        return self.loop_partitionings[idx]
-
+        return self.loop_partitionings[loop]

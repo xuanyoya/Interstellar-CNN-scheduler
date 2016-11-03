@@ -82,4 +82,3 @@ class Resource(object):
         Return the specification of the idx-th parallelism.
         '''
         return self.paras[idx]
-

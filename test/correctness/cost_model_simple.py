@@ -20,7 +20,8 @@ class TestCostModel(unittest.TestCase):
 
         point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, para_shared_level_list)
-        cost = cm.CostModel.get_cost(resource, point)
+        layer = cm.Layer(64, 32, 8, 8, 3, 3)
+        cost = cm.CostModel.get_cost(resource, point, layer)
         print cost
 
 if __name__ == '__main__':

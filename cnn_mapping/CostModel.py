@@ -6,7 +6,7 @@ from operator import mul
 import LoopEnum as le
 import BufferEnum as be
 
-def get_layer_size(point):
+def get_total_block_size(point):
     '''
     Get size of ifmap, ofmap, filter 
     '''
@@ -31,6 +31,13 @@ def get_layer_size(point):
     ofmap_size = ox_size * ox_par * oy_size * oy_par * oc_size * oc_par
     flmap_size = fx_size * fx_par * fy_size * fy_par * ic_size * ic_par * oc_size * oc_par
 
+    return (ifmap_size, ofmap_size, flmap_size)
+
+def get_layer_size(layer):
+    ifmap_size = layer.wifm * layer.hifm * layer.nifm
+    ofmap_size = layer.wofm * layer.hofm * layer.nofm
+    flmap_size = layer.wfil * layer.hfil * layer.nifm * layer.nofm
+ 
     return (ifmap_size, ofmap_size, flmap_size)
 
 def get_if_access(level, point):
@@ -94,7 +101,7 @@ def get_access(num_levels, point):
     return access_list
 
 
-def get_cost(resource, point):
+def get_cost(resource, point, layer):
     '''
     Get the cost of the given mapping point on given resource.
 
@@ -107,7 +114,7 @@ def get_cost(resource, point):
     "levels: %d" % num_levels 
     
     access_list  = get_access(num_levels, point)
-    layer_size = get_layer_size(point)
+    layer_size = get_layer_size(layer)
     
     total_cost = 0
     for i in xrange(num_levels):

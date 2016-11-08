@@ -6,33 +6,6 @@ from operator import mul
 import LoopEnum as le
 import BufferEnum as be
 
-def get_total_block_size(point):
-    '''
-    Get size of ifmap, ofmap, filter 
-    '''
-
-    #TODO problem size
-    ox_size = reduce(mul, point.loop_blocking(le.OX)) 
-    oy_size = reduce(mul, point.loop_blocking(le.OY)) 
-    oc_size = reduce(mul, point.loop_blocking(le.OC)) 
-    ic_size = reduce(mul, point.loop_blocking(le.IC)) 
-    fx_size = reduce(mul, point.loop_blocking(le.FX)) 
-    fy_size = reduce(mul, point.loop_blocking(le.FY)) 
-
-    ox_par = reduce(mul, point.loop_partitioning(le.OX)) 
-    oy_par = reduce(mul, point.loop_partitioning(le.OY)) 
-    oc_par = reduce(mul, point.loop_partitioning(le.OC)) 
-    ic_par = reduce(mul, point.loop_partitioning(le.IC)) 
-    fx_par = reduce(mul, point.loop_partitioning(le.FX)) 
-    fy_par = reduce(mul, point.loop_partitioning(le.FY)) 
-
-
-    ifmap_size = ox_size * ox_par * oy_size * oy_par * ic_size * ic_par 
-    ofmap_size = ox_size * ox_par * oy_size * oy_par * oc_size * oc_par
-    flmap_size = fx_size * fx_par * fy_size * fy_par * ic_size * ic_par * oc_size * oc_par
-
-    return (ifmap_size, ofmap_size, flmap_size)
-
 def get_layer_size(layer):
     '''
     Get size of ifmap, ofmap, filter of the layer 
@@ -55,11 +28,37 @@ def get_of_access(acc_list, par_list):
     par_list[le.FY] * acc_list[le.IC] * par_list[le.IC]
    
         
-
 def get_fl_access(acc_list, par_list):
 
     return acc_list[le.OX] * par_list[le.OX] * acc_list[le.OY] * \
     par_list[le.OY] * acc_list[le.ON] * par_list[le.ON]
+
+
+def get_if_size(acc_list, par_list, layer):
+
+    fx_acc = acc_list[le.FX] * par_list[le.FX] 
+    fy_acc = acc_list[le.FY] * par_list[le.FY] 
+    ox_acc = acc_list[le.OX] * par_list[le.OX]
+    oy_acc = acc_list[le.OY] * par_list[le.OY]
+    width = fx_acc + (ox_acc - 1) * layer.wstd
+    height = fy_acc + (oy_acc - 1) * layer.hstd
+
+    return width * height * acc_list[le.IC] * par_list[le.IC] * \
+    acc_list[le.ON] * par_list[le.ON]
+
+def get_of_size(acc_list, par_list):
+
+    return acc_list[le.OX] * par_list[le.OX] * acc_list[le.OY] * \
+    par_list[le.OY] * acc_list[le.OC] * par_list[le.OC] * \
+    acc_list[le.ON] * par_list[le.ON]
+   
+        
+def get_fl_size(acc_list, par_list):
+
+    return acc_list[le.FX] * par_list[le.FX] * acc_list[le.FY] * \
+    par_list[le.FY] * acc_list[le.IC] * par_list[le.IC] * \
+    acc_list[le.OC] * par_list[le.OC]
+
 
 def get_access(num_levels, point):
     '''
@@ -74,7 +73,7 @@ def get_access(num_levels, point):
     '''
     #TODO support more access modes in parallelism case
     #TODO support more customized memory
-
+    #TODO more access at overlapped boundary
     '''
     fx_acc = reduce(mul, point.loop_blocking(le.FX)[level+1:], 1) # exlusive
     fy_acc = reduce(mul, point.loop_blocking(le.FY)[level+1:], 1) # exlusive
@@ -109,6 +108,31 @@ def get_access(num_levels, point):
     return access_list
 
 
+def get_block_size(num_levels, point, layer):
+    '''
+    Get size of ifmap, ofmap, filter 
+    '''
+    block_list = []
+    for level in xrange(num_levels):
+        acc_list = []
+        par_list = []
+        for i in xrange(le.NUM):
+            acc_list.append(reduce(mul, point.loop_blocking(i)[:level+1], 1))
+            par_list.append(reduce(mul, point.loop_partitioning(i)[:level+1], 1))
+
+        if_block_size = get_if_size(acc_list, par_list, layer)
+        of_block_size = get_of_size(acc_list, par_list)
+        fl_block_size = get_fl_size(acc_list, par_list)
+        block_list.append((if_block_size, of_block_size, fl_block_size))
+
+    return block_list
+
+
+def fit_in_level(cap, blocks):
+    return sum(blocks) <= cap
+
+
+
 def get_cost(resource, point, layer, verbose=False):
     '''
     Get the cost of the given mapping point on given resource.
@@ -123,15 +147,19 @@ def get_cost(resource, point, layer, verbose=False):
     "levels: %d" % num_levels 
     
     access_list  = get_access(num_levels, point)
+    block_size_list = get_block_size(num_levels, point, layer)
     layer_size = get_layer_size(layer)
     
     if verbose:
         print 'access_list: ', access_list
+        print 'block_size_list: ', block_size_list
         print 'layer_size: ', layer_size
 
-    total_cost = 0
+    total_cost = 0.0
     for i in xrange(num_levels):
         ''' List of total access of each buffer at level i'''
+        if not fit_in_level(resource.buffer(i).capacity, block_size_list[i]):
+           return float("inf")
         buffer_access = map(mul, access_list[i], layer_size) 
         total_cost += sum(buffer_access) * resource.buffer(i).access_cost
 

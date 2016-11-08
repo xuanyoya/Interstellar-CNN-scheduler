@@ -14,11 +14,12 @@ class Layer(object):
     hofm: ofmap height.
     wfil: weight filter width.
     hfil: weight filter height.
+    nimg: # input images (batch).
     wstd: stride size in width dimension.
     hstd: stride size in height dimension.
     '''
 
-    def __init__(self, nifm, nofm, wofm, hofm, wfil, hfil, wstd=1, hstd=1):
+    def __init__(self, nifm, nofm, wofm, hofm, wfil, hfil, nimg=1, wstd=1, hstd=1):
         self.nifm = nifm
         self.nofm = nofm
         self.wofm = wofm
@@ -27,10 +28,12 @@ class Layer(object):
         self.hifm = hfil + (hofm - 1) * hstd
         self.wfil = wfil
         self.hfil = hfil
+        self.nimg = nimg
         self.wstd = wstd
         self.hstd = hstd
         assert self.wofm > 0
         assert self.hofm > 0
+        assert self.nimg > 0
 
 class FCLayer(Layer):
     '''
@@ -39,6 +42,6 @@ class FCLayer(Layer):
     wifm/hifm = wfil/hfil, wstd/hstd = 1, wofm/hofm = 1
     '''
 
-    def __init__(self, nifm, nofm, wfil, hfil):
-        Layer.__init__(self, nifm, nofm, 1, 1, wfil, hfil)
+    def __init__(self, nifm, nofm, wfil, hfil, nimg=1):
+        Layer.__init__(self, nifm, nofm, 1, 1, wfil, hfil, nimg)
 

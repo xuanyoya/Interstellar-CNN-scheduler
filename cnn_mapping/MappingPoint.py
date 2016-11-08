@@ -35,9 +35,9 @@ class MappingPoint(object):
 
         Tuples are organized as the same order as loop enum order.
 
-        E.g., (FX, FY, OX, OY, OC, IC) means a loop structure as:
-        E.g., [(0, 0), (1, 1), (2, 4), (3, 5), (4, 3), (5, 2)]
+        E.g., [(0, 0), (1, 1), (2, 4), (3, 5), (4, 3), (5, 2), (6, 6)]
         means a loop structure as:
+          for on
             for oy
               for ox
                 for oc
@@ -45,13 +45,14 @@ class MappingPoint(object):
                     for fy
                       for fx
 
-                        for ic
-                          for oc
-                            for oy
-                              for ox
-                                for fy
-                                  for fx
-                                    ...
+                        for on
+                          for ic
+                            for oc
+                              for oy
+                                for ox
+                                  for fy
+                                    for fx
+                                      ...
         '''
         return self.loop_orders[loop]
 

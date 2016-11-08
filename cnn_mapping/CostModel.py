@@ -34,8 +34,12 @@ def get_total_block_size(point):
     return (ifmap_size, ofmap_size, flmap_size)
 
 def get_layer_size(layer):
-    ifmap_size = layer.wifm * layer.hifm * layer.nifm
-    ofmap_size = layer.wofm * layer.hofm * layer.nofm
+    '''
+    Get size of ifmap, ofmap, filter of the layer 
+    '''
+
+    ifmap_size = layer.wifm * layer.hifm * layer.nifm * layer.nimg
+    ofmap_size = layer.wofm * layer.hofm * layer.nofm * layer.nimg
     flmap_size = layer.wfil * layer.hfil * layer.nifm * layer.nofm
  
     return (ifmap_size, ofmap_size, flmap_size)
@@ -54,7 +58,8 @@ def get_of_access(acc_list, par_list):
 
 def get_fl_access(acc_list, par_list):
 
-    return acc_list[le.OX] * par_list[le.OX] * acc_list[le.OY] * par_list[le.OY]
+    return acc_list[le.OX] * par_list[le.OX] * acc_list[le.OY] * \
+    par_list[le.OY] * acc_list[le.ON] * par_list[le.ON]
 
 def get_access(num_levels, point):
     '''

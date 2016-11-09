@@ -17,25 +17,86 @@ def get_layer_size(layer):
  
     return (ifmap_size, ofmap_size, flmap_size)
 
-def get_if_access(acc_list, par_list):
+def get_if_access(level, point):
+    '''
+    Get # access of if block at current level
+    '''
+    
+    ex_order_index = min(point.loop_order(le.OX)[level], 
+        point.loop_order(le.OY)[level], 
+        point.loop_order(le.IC)[level], 
+        point.loop_order(le.ON)[level])
 
-    return acc_list[le.FX] * par_list[le.FX] * acc_list[le.FY] * \
-    par_list[le.FY] * acc_list[le.OC] * par_list[le.OC]
+    fx_exclusive = point.loop_order(le.FX)[level] < ex_order_index
+    fy_exclusive = point.loop_order(le.FY)[level] < ex_order_index
+    oc_exclusive = point.loop_order(le.OC)[level] < ex_order_index
 
-def get_of_access(acc_list, par_list):
+    fx_acc = reduce(mul, point.loop_blocking(le.FX)[level+fx_exclusive:], 1) 
+    fy_acc = reduce(mul, point.loop_blocking(le.FY)[level+fy_exclusive:], 1) 
+    oc_acc = reduce(mul, point.loop_blocking(le.OC)[level+oc_exclusive:], 1) 
 
-    return acc_list[le.FX] * par_list[le.FX] * acc_list[le.FY] * \
-    par_list[le.FY] * acc_list[le.IC] * par_list[le.IC]
+    fx_par = reduce(mul, point.loop_partitioning(le.FX)[level+fx_exclusive:], 1) 
+    fy_par = reduce(mul, point.loop_partitioning(le.FY)[level+fy_exclusive:], 1) 
+    oc_par = reduce(mul, point.loop_partitioning(le.OC)[level+oc_exclusive:], 1) 
+
+    return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
+
+
+def get_of_access(level, point):
+    '''
+    Get # access of of block at current level
+    '''
+
+    ex_order_index = min(point.loop_order(le.OX)[level], 
+        point.loop_order(le.OY)[level], 
+        point.loop_order(le.OC)[level], 
+        point.loop_order(le.ON)[level])
+
+    fx_exclusive = point.loop_order(le.FX)[level] < ex_order_index
+    fy_exclusive = point.loop_order(le.FY)[level] < ex_order_index
+    ic_exclusive = point.loop_order(le.IC)[level] < ex_order_index
+
+    fx_acc = reduce(mul, point.loop_blocking(le.FX)[level+fx_exclusive:], 1) 
+    fy_acc = reduce(mul, point.loop_blocking(le.FY)[level+fy_exclusive:], 1) 
+    ic_acc = reduce(mul, point.loop_blocking(le.IC)[level+ic_exclusive:], 1) 
+
+    fx_par = reduce(mul, point.loop_partitioning(le.FX)[level+fx_exclusive:], 1) 
+    fy_par = reduce(mul, point.loop_partitioning(le.FY)[level+fy_exclusive:], 1) 
+    ic_par = reduce(mul, point.loop_partitioning(le.IC)[level+ic_exclusive:], 1) 
+
+    return fx_acc * fy_acc * ic_acc * fx_par * fy_par * ic_par
    
         
-def get_fl_access(acc_list, par_list):
+def get_fl_access(level, point):
+    '''
+    Get # access of fl block at current level
+    '''
 
-    return acc_list[le.OX] * par_list[le.OX] * acc_list[le.OY] * \
-    par_list[le.OY] * acc_list[le.ON] * par_list[le.ON]
+    ex_order_index = min(point.loop_order(le.FX)[level], 
+        point.loop_order(le.FY)[level], 
+        point.loop_order(le.IC)[level], 
+        point.loop_order(le.OC)[level])
+
+    ox_exclusive = point.loop_order(le.OX)[level] < ex_order_index
+    oy_exclusive = point.loop_order(le.OY)[level] < ex_order_index
+    on_exclusive = point.loop_order(le.ON)[level] < ex_order_index
+
+    ox_acc = reduce(mul, point.loop_blocking(le.OX)[level+ox_exclusive:], 1) 
+    oy_acc = reduce(mul, point.loop_blocking(le.OY)[level+oy_exclusive:], 1)
+    on_acc = reduce(mul, point.loop_blocking(le.ON)[level+on_exclusive:], 1) 
+
+    ox_par = reduce(mul, point.loop_partitioning(le.OX)[level+ox_exclusive:], 1) 
+    oy_par = reduce(mul, point.loop_partitioning(le.OY)[level+oy_exclusive:], 1) 
+    on_par = reduce(mul, point.loop_partitioning(le.ON)[level+on_exclusive:], 1) 
+
+    return ox_acc * oy_acc * on_acc * ox_par * oy_par * on_par
 
 
 def get_if_size(acc_list, par_list, layer):
-
+    '''
+    Get size of if block at current level
+    '''
+ 
     fx_acc = acc_list[le.FX] * par_list[le.FX] 
     fy_acc = acc_list[le.FY] * par_list[le.FY] 
     ox_acc = acc_list[le.OX] * par_list[le.OX]
@@ -47,14 +108,20 @@ def get_if_size(acc_list, par_list, layer):
     acc_list[le.ON] * par_list[le.ON]
 
 def get_of_size(acc_list, par_list):
-
+    '''
+    Get size of of block at current level
+    '''
+ 
     return acc_list[le.OX] * par_list[le.OX] * acc_list[le.OY] * \
     par_list[le.OY] * acc_list[le.OC] * par_list[le.OC] * \
     acc_list[le.ON] * par_list[le.ON]
    
         
 def get_fl_size(acc_list, par_list):
-
+    '''
+    Get size of fl block at current level
+    '''
+ 
     return acc_list[le.FX] * par_list[le.FX] * acc_list[le.FY] * \
     par_list[le.FY] * acc_list[le.IC] * par_list[le.IC] * \
     acc_list[le.OC] * par_list[le.OC]
@@ -94,15 +161,9 @@ def get_access(num_levels, point):
     
     access_list = []
     for level in xrange(num_levels):
-        acc_list = []
-        par_list = []
-        for i in xrange(le.NUM):
-            acc_list.append(reduce(mul, point.loop_blocking(i)[level+1:], 1))
-            par_list.append(reduce(mul, point.loop_partitioning(i)[level+1:], 1))
-
-        if_block_access = get_if_access(acc_list, par_list)
-        of_block_access = get_of_access(acc_list, par_list)
-        fl_block_access = get_fl_access(acc_list, par_list)
+        if_block_access = get_if_access(level, point)
+        of_block_access = get_of_access(level, point)
+        fl_block_access = get_fl_access(level, point)
         access_list.append((if_block_access, of_block_access, fl_block_access))
 
     return access_list

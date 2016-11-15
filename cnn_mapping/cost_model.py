@@ -3,8 +3,8 @@ Cost model.
 '''
 from operator import mul
 
-import LoopEnum as le
-import BufferEnum as be
+import loop_enum as le
+import buffer_enum as be
 
 def get_layer_size(layer):
     '''

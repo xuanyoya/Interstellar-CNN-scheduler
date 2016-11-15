@@ -2,8 +2,8 @@
 cnn_mapping package
 '''
 
-from .MappingPoint import MappingPoint
-from .Resource import Resource
-from .Layer import Layer
-import CostModel
+from .mapping_point import MappingPoint
+from .resource import Resource
+from .layer import Layer
+from . import cost_model
 

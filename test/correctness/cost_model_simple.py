@@ -21,7 +21,7 @@ class TestCostModel(unittest.TestCase):
         point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, para_shared_level_list)
         layer = cm.Layer(64, 32, 8, 8, 3, 3, 1)
-        cost = cm.CostModel.get_cost(resource, point, layer, True)
+        cost = cm.cost_model.get_cost(resource, point, layer, True)
         real_cost = (6400*32 + 2048*64 + 18432*64) + (6400*32 + 2048*64+18432*1)*6 + (6400 + 2048*64 + 18432)*23 + (6400+2048+18432)*64
         self.assertEqual(cost, real_cost)
 
@@ -39,7 +39,7 @@ class TestCostModel(unittest.TestCase):
         point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, para_shared_level_list)
         layer = cm.Layer(256, 128, 512, 512, 3, 3, 1)
-        cost = cm.CostModel.get_cost(resource, point, layer, True)
+        cost = cm.cost_model.get_cost(resource, point, layer, True)
         real_cost = float("inf")
         self.assertEqual(cost, real_cost)
 

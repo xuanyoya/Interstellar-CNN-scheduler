@@ -11,7 +11,7 @@ class MappingPoint(object):
     parallel units, etc.
 
     Each loop order and each set of loop blocking factors are corresponding to
-    each loop at all buffer levels, because it does not make much sense to block 
+    each loop at all buffer levels, because it does not make much sense to block
     more than once at a single buffer level.
 
     Each set of loop partitioning factors is corresponding to number of parallelism of
@@ -30,13 +30,14 @@ class MappingPoint(object):
         '''
         Loop order of the given loop.
 
-        A tuple with loop index for each level, 
-        with smaller index corresponding to inner loop.
+        Return a tuple of the order indices for the given loop at all buffer
+        levels, with smaller index corresponding to inner loop.
 
         Tuples are organized as the same order as loop enum order.
 
         E.g., [(0, 0), (1, 1), (2, 4), (3, 5), (4, 3), (5, 2), (6, 6)]
-        means a loop structure as:
+        means for the first loop (FX = 0), at both levels FX is at the
+        innermost (tuple (0, 0)), etc.. I.e., it means a loop structure as:
           for on
             for oy
               for ox
@@ -60,23 +61,29 @@ class MappingPoint(object):
         '''
         Loop blocking factors of the given loop.
 
-        A tuple with factor for each level from inside loop to 
-        outside loop.
+        Return a tuple of factors for the given loop at all buffer levels, from
+        inside level to outside level.
 
         Tuples are organized as the same order as loop enum order.
 
-        E.g., blocking factor at buffer level l is blocking[l].
+        E.g., [(4, 2), (8, 1), ...] means for the first loop (FX = 0), the
+        blocking factor is 4 for the innermost level, and 2 for the next level;
+        for the second loop (FY = 0), the blocking factor is 8 for the
+        innermost level, and 1 for the next level.
         '''
         return self.loop_blockings[loop]
 
     def loop_partitioning(self, loop):
         '''
-        Loop partitioning factors of the given loop. 
+        Loop partitioning factors of the given loop.
 
-        A tuple with factor for each level from inside loop to outside loop.
+        Return a tuple of factors for the given loop at all buffer levels, from
+        inside level to outside level.
 
         Tuples are organized as the same order as loop enum order.
 
-        E.g., partitioning factor at level l is partitioning[l].
+        E.g., [(4, 2), (8, 1), ...] means for the first loop (FX = 0), it is
+        parallelized in 4 units for the first parallel level, and 2 for the
+        next level, etc..
         '''
         return self.loop_partitionings[loop]

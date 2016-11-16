@@ -153,23 +153,6 @@ def get_access(num_levels, point):
     #TODO support more access modes in parallelism case
     #TODO support more customized memory
     #TODO more access at overlapped boundary
-    '''
-    fx_acc = reduce(mul, point.loop_blocking(le.FX)[level+1:], 1) # exlusive
-    fy_acc = reduce(mul, point.loop_blocking(le.FY)[level+1:], 1) # exlusive
-    ox_acc = reduce(mul, point.loop_blocking(le.OX)[level+1:], 1) #exclusive
-    oy_acc = reduce(mul, point.loop_blocking(le.OY)[level+1:], 1) #exclusive
-    oc_acc = reduce(mul, point.loop_blocking(le.OC)[level+1:], 1) #exclusive
-    ic_acc = reduce(mul, point.loop_blocking(le.IC)[level+1:], 1) #exclusive
-
-
-
-    fx_par = reduce(mul, point.loop_partitioning(le.FX)[level+1:], 1) 
-    fy_par = reduce(mul, point.loop_partitioning(le.FY)[level+1:], 1) 
-    ox_par = reduce(mul, point.loop_partitioning(le.OX)[level+1:], 1) 
-    oy_par = reduce(mul, point.loop_partitioning(le.OY)[level+1:], 1) 
-    oc_par = reduce(mul, point.loop_partitioning(le.OC)[level+1:], 1) 
-    ic_par = reduce(mul, point.loop_partitioning(le.IC)[level+1:], 1) 
-    '''
     
     access_list = []
     for level in xrange(num_levels):

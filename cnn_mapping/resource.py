@@ -19,15 +19,16 @@ class Buffer(namedtuple('Buffer',
     pass
 
 class Parallelism(namedtuple('Parallelism',
-                             ['count'])):
+                             ['count', 'shared_buffer_level'])):
     '''
     Parallelism specification.
 
     Immutable type.
 
-    Parallelism attributes include count.
+    Parallelism attributes include count, shared buffer level.
 
-    Count is the number of parallel units.
+    Count is the number of parallel units; shared buffer level is the level
+    index of the lowest shared buffer for this parallelism.
     '''
     pass
 
@@ -70,8 +71,14 @@ class Resource(object):
         '''
         return self.bufs[level]
 
-    def parallelism(self, level):
+    def parallelism_levels(self):
         '''
-        Return the specification of the parallelism of the given level.
+        Return total levels of parallelism in the hierarchy.
         '''
-        return self.paras[level]
+        return len(self.paras)
+
+    def parallelism(self, idx):
+        '''
+        Return the specification of the idx-th parallelism.
+        '''
+        return self.paras[idx]

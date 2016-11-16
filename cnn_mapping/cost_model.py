@@ -20,6 +20,14 @@ def get_layer_size(layer):
 def get_if_access(level, point):
     '''
     Get # access of if block at current level
+
+    The repeated access to ifmap is determined by the blocking factors and
+    parallelism counts of those loops other than ifmap-related loops outside of
+    this level.
+
+    At the same buffer level, if the other loops are outside of the innermost
+    loop of ifmap-related loops, their blocking factors and parallelism counts
+    at this level should also contribute to the number of accesses.
     '''
     
     ex_order_index = min(point.loop_order(le.OX)[level], 
@@ -45,6 +53,8 @@ def get_if_access(level, point):
 def get_of_access(level, point):
     '''
     Get # access of of block at current level
+
+    See comments in routine for ifmap.
     '''
 
     ex_order_index = min(point.loop_order(le.OX)[level], 
@@ -70,6 +80,8 @@ def get_of_access(level, point):
 def get_fl_access(level, point):
     '''
     Get # access of fl block at current level
+
+    See comments in routine for ifmap.
     '''
 
     ex_order_index = min(point.loop_order(le.FX)[level], 

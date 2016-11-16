@@ -43,6 +43,24 @@ class TestCostModel(unittest.TestCase):
         real_cost = float("inf")
         self.assertEqual(cost, real_cost)
 
+    def test_invalide_partition(self):
+        capacity_list = [512, 16384, 262144, 2097152]
+        access_cost_list = [1, 6, 23, 64]
+        static_cost_list = [0.2, 32*0.2, 512*0.2, 4096*0.2] 
+        para_count_list = [4, 16]
+        para_shared_level_list = [1, 3]
+
+        loop_order_list = [(0, 2, 1, 1), (1, 3, 2, 2), (2, 0, 3, 3), (3, 1, 4, 4), (4, 4, 0, 5), (5, 5, 5, 0), (6, 6, 6, 6)]
+        loop_blockings_list = [(3, 1, 1, 1), (3, 1, 1, 1), (1, 128, 1, 1), (1, 256, 1, 1), (1, 1, 128, 1), (1, 1, 1, 16), (1, 1, 1, 1)]
+        loop_partitionings_list = [(1, 1, 1, 1), (1, 1, 1, 1), (1, 4, 1, 1,), (1, 2, 1, 1), (1, 1, 1, 1), (1, 1, 1, 16), (1, 1, 1, 1)]
+
+        point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, para_shared_level_list)
+        layer = cm.Layer(256, 128, 512, 512, 3, 3, 1)
+        cost = cm.cost_model.get_cost(resource, point, layer, True)
+        real_cost = float("inf")
+        self.assertEqual(cost, real_cost)
+
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ class FCLayer(Layer):
     '''
     NN fully-connected layer parameters.
 
-    wifm/hifm = wfil/hfil, wstd/hstd = 1, wofm/hofm = 1
+    (wifm, hifm) = (wfil, hfil), wstd = hstd = 1, wofm = hofm = 1.
     '''
 
     def __init__(self, nifm, nofm, wfil, hfil, nimg=1):

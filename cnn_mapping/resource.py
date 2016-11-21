@@ -35,7 +35,6 @@ class Parallelism(namedtuple('Parallelism',
 class Resource(object):
     '''
     Hardware resource specification.
-
     Hardware resource includes buffer hierarchy and parallel processing units.
 
     '''
@@ -44,20 +43,17 @@ class Resource(object):
                  buf_unit_static_cost_list, para_count_list,
                  para_shared_buffer_level_list):
         # Buffers.
-        self.bufs = []
         assert len(buf_capacity_list) == len(buf_access_cost_list)
         assert len(buf_capacity_list) == len(buf_unit_static_cost_list)
-        for (cap, acost, uscost) in zip(buf_capacity_list,
-                                        buf_access_cost_list,
-                                        buf_unit_static_cost_list):
-            self.bufs.append(Buffer(cap, acost, uscost))
+        
+        self.bufs = [Buffer(*t) for t in zip(buf_capacity_list, \
+            buf_access_cost_list, buf_unit_static_cost_list)]
 
         # Parallelism.
-        self.paras = []
         assert len(para_count_list) == len(para_shared_buffer_level_list)
-        for (cnt, shlvl) in zip(para_count_list,
-                                para_shared_buffer_level_list):
-            self.paras.append(Parallelism(cnt, shlvl))
+
+        self.paras = [Parallelism(*t) for t in zip(para_count_list, \
+            para_shared_buffer_level_list)]
 
     def buffer_levels(self):
         '''

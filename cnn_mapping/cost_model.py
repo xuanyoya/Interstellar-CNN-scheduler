@@ -195,7 +195,7 @@ def get_block_sizes(num_levels, point, layer):
 def fit_in_level(cap, blocks):
     return sum(blocks) <= cap
 
-def valide_partition(resource, point, level):
+def valid_partition(resource, point, level):
     max_parallelism = 1
     for i in xrange(resource.parallelism_levels()):
         if resource.parallelism(i).shared_buffer_level - 1 == level:
@@ -207,11 +207,11 @@ def valide_partition(resource, point, level):
 
     return actual_parallelism <= max_parallelism  
 
-def valide_mapping_point(resource, point, layer, level):
-    valide = fit_in_level(resource.buffer(level).capacity, 
+def valid_mapping_point(resource, point, layer, level):
+    valid = fit_in_level(resource.buffer(level).capacity, 
              get_block_size(point, layer, level)) \
-             and valide_partition(resource, point, level)    
-    return valide 
+             and valid_partition(resource, point, level)    
+    return valid 
 
 def get_cost(resource, point, layer, verbose=False):
     '''
@@ -238,7 +238,7 @@ def get_cost(resource, point, layer, verbose=False):
     total_cost = 0.0
     for i in xrange(num_levels):
         ''' List of total access of each buffer at level i'''
-        if not valide_mapping_point(resource, point, layer, i):
+        if not valid_mapping_point(resource, point, layer, i):
            #if not fit_in_level(resource.buffer(i).capacity, block_size_list[i]):
            return float("inf")
         buffer_access = map(mul, access_list[i], layer_size) 

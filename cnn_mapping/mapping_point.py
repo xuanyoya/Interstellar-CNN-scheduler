@@ -30,12 +30,15 @@ class MappingPoint(object):
         '''
         Loop order of the given loop.
 
-        Return a tuple of the order indices for the given loop at all buffer
-        levels, with smaller index corresponding to inner loop.
+        Return a tuple of the order indices for the same loop at all buffer
+        levels, i.e., if a tuple for loop OX is returned, and the first 
+        element of this tuple t[0] = 2, then loop OX is the third innermost 
+        loop at the first buffer level.  
 
         Tuples are organized as the same order as loop enum order.
 
-        E.g., [(0, 0), (1, 1), (2, 4), (3, 5), (4, 3), (5, 2), (6, 6)]
+        E.g., for a two-level memory hierachy, each tuple contains two 
+        elements, [(0, 0), (1, 1), (2, 4), (3, 5), (4, 3), (5, 2), (6, 6)]
         means for the first loop (FX = 0), at both levels FX is at the
         innermost (tuple (0, 0)), etc.. I.e., it means a loop structure as:
           for on

@@ -198,7 +198,7 @@ def fit_in_level(cap, blocks):
 def valide_partition(resource, point, level):
     max_parallelism = 1
     for i in xrange(resource.parallelism_levels()):
-        if resource.parallelism(i).shared_buffer_level == level:
+        if resource.parallelism(i).shared_buffer_level - 1 == level:
             max_parallelism = resource.parallelism(i).count
 
     actual_parallelism = 1 

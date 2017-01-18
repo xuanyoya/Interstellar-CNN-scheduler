@@ -172,7 +172,7 @@ def get_block_size(point, layer, level):
     partitioning_accum_list = []
     for i in xrange(le.NUM):
         blocking_accum_list.append(reduce(mul, point.loop_blocking(i)[:level+1], 1))
-        partitioning_accum_list.append(reduce(mul, point.loop_partitioning(i)[:level+1], 1))
+        partitioning_accum_list.append(reduce(mul, point.loop_partitioning(i)[:level+1], 1)) #FIXME inclusive mode also duplicates data
 
     if_block_size = get_if_size(blocking_accum_list, partitioning_accum_list, layer)
     of_block_size = get_of_size(blocking_accum_list, partitioning_accum_list)
@@ -196,10 +196,7 @@ def fit_in_level(cap, blocks):
     return sum(blocks) <= cap
 
 def valid_partition(resource, point, level):
-    max_parallelism = 1
-    for i in xrange(resource.parallelism_levels()):
-        if resource.parallelism(i).shared_buffer_level - 1 == level:
-            max_parallelism = resource.parallelism(i).count
+    max_parallelism = resource.parallelism(level).count
 
     actual_parallelism = 1 
     for i in xrange(le.NUM):

@@ -19,15 +19,17 @@ class Buffer(namedtuple('Buffer',
     pass
 
 class Parallelism(namedtuple('Parallelism',
-                             ['count', 'shared_buffer_level'])):
+                             ['count'])):
     '''
     Parallelism specification.
 
     Immutable type.
 
-    Parallelism attributes include count, shared buffer level.
+    Parallelism attributes include count.
 
-    Count is the number of parallel units; shared buffer level is the level
+    Count is the number of parallel units. 
+    
+    Note: shared buffer level is the level
     index of the lowest shared buffer for this parallelism.
     '''
     pass
@@ -40,8 +42,7 @@ class Resource(object):
     '''
 
     def __init__(self, buf_capacity_list, buf_access_cost_list,
-                 buf_unit_static_cost_list, para_count_list,
-                 para_shared_buffer_level_list):
+                 buf_unit_static_cost_list, para_count_list):
         # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
         assert len(buf_capacity_list) == len(buf_unit_static_cost_list)
@@ -50,10 +51,7 @@ class Resource(object):
             buf_access_cost_list, buf_unit_static_cost_list)]
 
         # Parallelism.
-        assert len(para_count_list) == len(para_shared_buffer_level_list)
-
-        self.paras = [Parallelism(*t) for t in zip(para_count_list, \
-            para_shared_buffer_level_list)]
+        self.paras = [Parallelism(t) for t in para_count_list]
 
     def buffer_levels(self):
         '''
@@ -67,14 +65,9 @@ class Resource(object):
         '''
         return self.bufs[level]
 
-    def parallelism_levels(self):
-        '''
-        Return total levels of parallelism in the hierarchy.
-        '''
-        return len(self.paras)
 
-    def parallelism(self, idx):
+    def parallelism(self, level):
         '''
-        Return the specification of the idx-th parallelism.
+        Return the specification of the parallelism of the given level.
         '''
-        return self.paras[idx]
+        return self.paras[level]

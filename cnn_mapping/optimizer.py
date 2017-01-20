@@ -32,4 +32,4 @@ def optimizer(resource, layer, verbose=False):
         #        print "Current best mapping_point: ", mapping_point.loop_blockings, mapping_point.loop_orders
     #print counter
     if verbose:
-        print "Best mapping_point: ", best_mapping_point
+        print "Best mapping_point: ", best_mapping_point.loop_blockings, mapping_point.loop_orders

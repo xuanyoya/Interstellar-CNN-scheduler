@@ -30,22 +30,22 @@ def get_if_access(level, point):
     at this level should also contribute to the number of accesses.
     '''
     
-    ex_order_index = min(point.loop_order(le.OX)[level], 
-        point.loop_order(le.OY)[level], 
-        point.loop_order(le.IC)[level], 
-        point.loop_order(le.ON)[level])
+    ex_order_index = min(point.loop_orders[le.OX][level], 
+        point.loop_orders[le.OY][level], 
+        point.loop_orders[le.IC][level], 
+        point.loop_orders[le.ON][level])
 
-    fx_exclusive = point.loop_order(le.FX)[level] < ex_order_index
-    fy_exclusive = point.loop_order(le.FY)[level] < ex_order_index
-    oc_exclusive = point.loop_order(le.OC)[level] < ex_order_index
+    fx_exclusive = point.loop_orders[le.FX][level] < ex_order_index
+    fy_exclusive = point.loop_orders[le.FY][level] < ex_order_index
+    oc_exclusive = point.loop_orders[le.OC][level] < ex_order_index
 
-    fx_acc = reduce(mul, point.loop_blocking(le.FX)[level+fx_exclusive:], 1) 
-    fy_acc = reduce(mul, point.loop_blocking(le.FY)[level+fy_exclusive:], 1) 
-    oc_acc = reduce(mul, point.loop_blocking(le.OC)[level+oc_exclusive:], 1) 
+    fx_acc = reduce(mul, point.loop_blockings[le.FX][level+fx_exclusive:], 1) 
+    fy_acc = reduce(mul, point.loop_blockings[le.FY][level+fy_exclusive:], 1) 
+    oc_acc = reduce(mul, point.loop_blockings[le.OC][level+oc_exclusive:], 1) 
 
-    fx_par = reduce(mul, point.loop_partitioning(le.FX)[level+fx_exclusive:], 1) 
-    fy_par = reduce(mul, point.loop_partitioning(le.FY)[level+fy_exclusive:], 1) 
-    oc_par = reduce(mul, point.loop_partitioning(le.OC)[level+oc_exclusive:], 1) 
+    fx_par = reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
+    fy_par = reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
+    oc_par = reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
 
     return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
 
@@ -57,22 +57,22 @@ def get_of_access(level, point):
     See comments in routine for ifmap.
     '''
 
-    ex_order_index = min(point.loop_order(le.OX)[level], 
-        point.loop_order(le.OY)[level], 
-        point.loop_order(le.OC)[level], 
-        point.loop_order(le.ON)[level])
+    ex_order_index = min(point.loop_orders[le.OX][level], 
+        point.loop_orders[le.OY][level], 
+        point.loop_orders[le.OC][level], 
+        point.loop_orders[le.ON][level])
 
-    fx_exclusive = point.loop_order(le.FX)[level] < ex_order_index
-    fy_exclusive = point.loop_order(le.FY)[level] < ex_order_index
-    ic_exclusive = point.loop_order(le.IC)[level] < ex_order_index
+    fx_exclusive = point.loop_orders[le.FX][level] < ex_order_index
+    fy_exclusive = point.loop_orders[le.FY][level] < ex_order_index
+    ic_exclusive = point.loop_orders[le.IC][level] < ex_order_index
 
-    fx_acc = reduce(mul, point.loop_blocking(le.FX)[level+fx_exclusive:], 1) 
-    fy_acc = reduce(mul, point.loop_blocking(le.FY)[level+fy_exclusive:], 1) 
-    ic_acc = reduce(mul, point.loop_blocking(le.IC)[level+ic_exclusive:], 1) 
+    fx_acc = reduce(mul, point.loop_blockings[le.FX][level+fx_exclusive:], 1) 
+    fy_acc = reduce(mul, point.loop_blockings[le.FY][level+fy_exclusive:], 1) 
+    ic_acc = reduce(mul, point.loop_blockings[le.IC][level+ic_exclusive:], 1) 
 
-    fx_par = reduce(mul, point.loop_partitioning(le.FX)[level+fx_exclusive:], 1) 
-    fy_par = reduce(mul, point.loop_partitioning(le.FY)[level+fy_exclusive:], 1) 
-    ic_par = reduce(mul, point.loop_partitioning(le.IC)[level+ic_exclusive:], 1) 
+    fx_par = reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
+    fy_par = reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
+    ic_par = reduce(mul, point.loop_partitionings[le.IC][level+ic_exclusive:], 1) 
 
     return fx_acc * fy_acc * ic_acc * fx_par * fy_par * ic_par
    
@@ -84,22 +84,22 @@ def get_fl_access(level, point):
     See comments in routine for ifmap.
     '''
 
-    ex_order_index = min(point.loop_order(le.FX)[level], 
-        point.loop_order(le.FY)[level], 
-        point.loop_order(le.IC)[level], 
-        point.loop_order(le.OC)[level])
+    ex_order_index = min(point.loop_orders[le.FX][level], 
+        point.loop_orders[le.FY][level], 
+        point.loop_orders[le.IC][level], 
+        point.loop_orders[le.OC][level])
 
-    ox_exclusive = point.loop_order(le.OX)[level] < ex_order_index
-    oy_exclusive = point.loop_order(le.OY)[level] < ex_order_index
-    on_exclusive = point.loop_order(le.ON)[level] < ex_order_index
+    ox_exclusive = point.loop_orders[le.OX][level] < ex_order_index
+    oy_exclusive = point.loop_orders[le.OY][level] < ex_order_index
+    on_exclusive = point.loop_orders[le.ON][level] < ex_order_index
 
-    ox_acc = reduce(mul, point.loop_blocking(le.OX)[level+ox_exclusive:], 1) 
-    oy_acc = reduce(mul, point.loop_blocking(le.OY)[level+oy_exclusive:], 1)
-    on_acc = reduce(mul, point.loop_blocking(le.ON)[level+on_exclusive:], 1) 
+    ox_acc = reduce(mul, point.loop_blockings[le.OX][level+ox_exclusive:], 1) 
+    oy_acc = reduce(mul, point.loop_blockings[le.OY][level+oy_exclusive:], 1)
+    on_acc = reduce(mul, point.loop_blockings[le.ON][level+on_exclusive:], 1) 
 
-    ox_par = reduce(mul, point.loop_partitioning(le.OX)[level+ox_exclusive:], 1) 
-    oy_par = reduce(mul, point.loop_partitioning(le.OY)[level+oy_exclusive:], 1) 
-    on_par = reduce(mul, point.loop_partitioning(le.ON)[level+on_exclusive:], 1) 
+    ox_par = reduce(mul, point.loop_partitionings[le.OX][level+ox_exclusive:], 1) 
+    oy_par = reduce(mul, point.loop_partitionings[le.OY][level+oy_exclusive:], 1) 
+    on_par = reduce(mul, point.loop_partitionings[le.ON][level+on_exclusive:], 1) 
 
     return ox_acc * oy_acc * on_acc * ox_par * oy_par * on_par
 
@@ -168,6 +168,7 @@ def get_access(num_levels, point):
 
 
 def get_block_size(point, layer, level):
+
     blocking_accum_list = []
     partitioning_accum_list = []
     for i in xrange(le.NUM):
@@ -224,20 +225,19 @@ def get_cost(resource, point, layer, verbose=False):
     "levels: %d" % num_levels 
     
     access_list  = get_access(num_levels, point)
-    block_size_list = get_block_sizes(num_levels, point, layer)
     layer_size = get_layer_size(layer)
     
     if verbose:
         print 'access_list: ', access_list
+        block_size_list = get_block_sizes(num_levels, point, layer)
         print 'block_size_list: ', block_size_list
         print 'layer_size: ', layer_size
 
     total_cost = 0.0
     for i in xrange(num_levels):
         ''' List of total access of each buffer at level i'''
-        if not valid_mapping_point(resource, point, layer, i):
-           #if not fit_in_level(resource.buffer(i).capacity, block_size_list[i]):
-           return float("inf")
+        #if not valid_mapping_point(resource, point, layer, i):
+        #   return float("inf")
         buffer_access = map(mul, access_list[i], layer_size) 
         total_cost += sum(buffer_access) * resource.buffer(i).access_cost
 

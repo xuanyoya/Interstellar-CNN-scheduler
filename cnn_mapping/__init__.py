@@ -6,4 +6,5 @@ from .mapping_point import MappingPoint
 from .resource import Resource
 from .layer import Layer
 from . import cost_model
-
+from . import mapping_point_generator
+from . import optimizer

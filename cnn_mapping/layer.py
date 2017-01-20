@@ -34,7 +34,8 @@ class Layer(object):
         assert self.wofm > 0
         assert self.hofm > 0
         assert self.nimg > 0
-
+        self.sizes = [wfil, hfil, wofm, hofm, nofm, nifm, nimg]
+    
 class FCLayer(Layer):
     '''
     NN fully-connected layer parameters.

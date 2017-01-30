@@ -25,6 +25,7 @@ def get_non_empty_loops(loop_blocking_trans):
         non_empty_loops.append([i for i, e in enumerate(t) if e != 1])
     return non_empty_loops
 
+#TODO optimize, current takes 30s 
 def get_loop_order(partial_order, non_empty_loops):
     loop_order = []
     for level in xrange(len(non_empty_loops)):

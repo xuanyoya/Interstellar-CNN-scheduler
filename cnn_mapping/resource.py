@@ -1,7 +1,7 @@
 '''
 Hardware resource types.
 '''
-
+import numpy as np
 from collections import namedtuple
 
 class Buffer(namedtuple('Buffer',
@@ -52,6 +52,7 @@ class Resource(object):
 
         # Parallelism.
         self.paras = [Parallelism(t) for t in para_count_list]
+        self.access_cost = np.array(buf_access_cost_list)
 
     def buffer_levels(self):
         '''

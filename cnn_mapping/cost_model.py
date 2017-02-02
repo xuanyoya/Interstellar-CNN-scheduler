@@ -1,7 +1,7 @@
 '''
 Cost model.
 '''
-import numpy as np
+#import numpy as np
 from operator import mul
 
 import loop_enum as le
@@ -16,7 +16,7 @@ def get_layer_size(layer):
     ofmap_size = layer.wofm * layer.hofm * layer.nofm * layer.nimg
     flmap_size = layer.wfil * layer.hfil * layer.nifm * layer.nofm
  
-    return np.array([ifmap_size, ofmap_size, flmap_size])
+    return [ifmap_size, ofmap_size, flmap_size]
 
 def get_if_access(level, point):
     '''
@@ -255,7 +255,7 @@ def get_access(num_levels, point):
         fl_block_access = get_fl_access(level, point)
         access_list.append([if_block_access, of_block_access, fl_block_access])
 
-    return np.array(access_list)
+    return access_list
 
 def opt_get_access(num_levels, point):
     '''
@@ -364,19 +364,21 @@ def get_cost(resource, point, layer, verbose=False):
     "number of blockings does not match with number of memory " \
     "levels: %d" % num_levels 
     
-    access_arr  = opt_get_access(num_levels, point)
+    access_list  = get_access(num_levels, point)
     layer_size = get_layer_size(layer)
     
     if verbose:
-        print 'access_list: ', access_arr
+        print 'access_list: ', access_list
         block_size_list = get_block_sizes(num_levels, point, layer)
         print 'block_size_list: ', block_size_list
         print 'layer_size: ', layer_size
 
     total_cost = 0.0
-    #for i in xrange(num_levels):
-    #    ''' List of total access of each buffer at level i'''
-    buffer_access = access_arr.dot(layer_size) #map(mul, access_list[i], layer_size) 
-    total_cost = buffer_access.dot(np.array(resource.access_cost))    #total_cost += sum(buffer_access) * resource.buffer(i).access_cost
+    for i in xrange(num_levels):
+        ''' List of total access of each buffer at level i'''
+        buffer_access = map(mul, access_list[i], layer_size)
+        total_cost += sum(buffer_access) * resource.access_cost[i]
+    #buffer_access = access_arr.dot(layer_size)  
+    #total_cost = buffer_access.dot(np.array(resource.access_cost))    
 
     return total_cost

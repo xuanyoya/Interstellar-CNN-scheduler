@@ -25,15 +25,12 @@ def get_non_empty_loops(loop_blocking_trans):
         non_empty_loops.append([i for i, e in enumerate(t) if e != 1])
     return non_empty_loops
 
-#TODO optimize, current takes 30s 
-def get_loop_order(partial_order, non_empty_loops):
-    loop_order = []
-    for level in xrange(len(non_empty_loops)):
-        order_curr_level = [le.NUM-1]*le.NUM
-        for i in xrange(len(non_empty_loops[level])):
-            order_curr_level[non_empty_loops[level][i]] = partial_order[level][i]  
-        loop_order.append(order_curr_level)
-    return zip(*loop_order)
+
+def get_loop_order(partial_order, non_empty_loops, level):
+    order_curr_level = [le.NUM-1] * le.NUM
+    for i in xrange(len(non_empty_loops[level])):
+        order_curr_level[non_empty_loops[level][i]] = partial_order[i]
+    return order_curr_level
 
 def opt_order_generator_function(bp, num_loops, num_levels):
     '''
@@ -52,12 +49,11 @@ def opt_order_generator_function(bp, num_loops, num_levels):
     for level in xrange(num_levels):
         one_level_permutations = []
         for order in itertools.permutations(range(len(non_empty_loops[level]))):
-            one_level_permutations.append(order)
+            one_level_permutations.append(get_loop_order(order, non_empty_loops, level))
         all_order_permutations.append(one_level_permutations)
 
-    for partial_order in itertools.product(*all_order_permutations):
-        loop_order = get_loop_order(partial_order, non_empty_loops)
-        yield loop_order
+    for loop_order in itertools.product(*all_order_permutations):
+        yield zip(*loop_order)
     
 
 def order_generator_function(num_loops, num_levels):

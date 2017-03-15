@@ -32,6 +32,7 @@ def get_loop_order(partial_order, non_empty_loops, level):
         order_curr_level[non_empty_loops[level][i]] = partial_order[i]
     return order_curr_level
 
+
 def opt_order_generator_function(bp, num_loops, num_levels):
     '''
     Smart loop_order_list generator.
@@ -55,7 +56,15 @@ def opt_order_generator_function(bp, num_loops, num_levels):
     for loop_order in itertools.product(*all_order_permutations):
         yield zip(*loop_order)
     
-
+def level_order_generator_function(bp, num_loops, num_levels):
+    non_empty_loops = get_non_empty_loops(zip(*bp))
+    #print "non_empty_loops: ", non_empty_loops
+ 
+    for level in xrange(num_levels):
+        one_level_permutations = []
+        for order in itertools.permutations(range(len(non_empty_loops[level]))):
+            yield get_loop_order(order, non_empty_loops, level)
+   
 def order_generator_function(num_loops, num_levels):
     '''
     General loop_order_list generator.
@@ -155,6 +164,70 @@ def valid_blocking_partitioning(resource, point, layer):
             return False
 
     return True
+
+
+def get_best_loop_order(resource, layer, bp, num_loops, num_levels, verbose=False):
+    best_loop_order = []
+    dummy_partitioning = [(1,) * num_levels] * le.NUM 
+
+    best_cost = 0
+    for level in xrange(num_levels):
+        smallest_cost = float("inf") 
+        for curr_level_order in level_order_generator_function(bp, num_loops, num_levels):
+            dummy_loop_order = [[0] * num_loops] * num_levels 
+            dummy_loop_order[level] = curr_level_order
+            #print zip(*dummy_loop_order)
+            mapping_point = MappingPoint(zip(*dummy_loop_order), bp, dummy_partitioning)        
+            curr_cost = cost_model.get_level_cost(resource, mapping_point, layer, level)
+            if curr_cost < smallest_cost:
+                best_curr_level_order = curr_level_order 
+                smallest_cost = curr_cost
+        best_loop_order.append(best_curr_level_order)
+        best_cost += smallest_cost
+
+    #print zip(*best_loop_order)
+    return best_cost, zip(*best_loop_order)
+
+def opt_mapping_point_generator_function(resource, layer, verbose=False):
+    '''
+    Mapping point generator.
+
+    Generates a new mapping point each iteration.
+    '''
+
+    num_levels = resource.buffer_levels()
+
+    blocking_partitioning_generator = \
+        blocking_generator_function(layer, num_levels) 
+        #blocking_partitioning_generator_function(resource, layer)
+    
+    dummy_partitioning = [(1,) * num_levels] * le.NUM 
+ 
+    smallest_cost = float("inf") 
+    for blocking_partitioning in blocking_partitioning_generator:
+        ''' 
+           dummy_mapping_point is used to validate the current blocking_partitioning,
+           and abandon the ones that exceed the buffer size at any level.
+           Since this validation does not depend on loop_orders, we perform the validation
+           at this early stage, so that we can avoid generating all the loop orders for 
+           an invalid blocking_partitioning 
+        '''
+        dummy_mapping_point = MappingPoint(None, blocking_partitioning, dummy_partitioning)
+        #print "blocking_partitioning: ", blocking_partitioning
+        if valid_blocking_partitioning(resource, dummy_mapping_point, layer):
+            cost, loop_order = get_best_loop_order(resource, layer, blocking_partitioning, le.NUM, num_levels)
+            if cost < smallest_cost:
+                smallest_cost = cost
+                best_mapping_point = MappingPoint(loop_order, blocking_partitioning, dummy_partitioning)
+            #loop_order = get_best_loop_order(resource, layer, blocking_partitioning, le.NUM, num_levels)
+            #mapping_point = MappingPoint(loop_order, \
+            #                    blocking_partitioning, \
+            #                    dummy_partitioning)
+            #                    #blocking_partitioning[0], \
+            #                    #blocking_partitioning[1])
+            #yield mapping_point
+    return smallest_cost, best_mapping_point
+ 
 
 def mapping_point_generator_function(resource, layer, verbose=False):
     '''

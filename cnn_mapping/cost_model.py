@@ -351,6 +351,18 @@ def valid_mapping_point(resource, point, layer, level):
              and valid_partition(resource, point, level)    
     return valid 
 
+    
+def get_level_cost(resource, point, layer, level, verbose=False):
+    layer_size = get_layer_size(layer)
+    level_access = [get_if_access(level, point), \
+                    get_of_access(level, point), \
+                    get_fl_access(level, point)] 
+
+    buffer_access = map(mul, level_access, layer_size)
+    level_cost = sum(buffer_access) * resource.access_cost[level]
+
+    return level_cost
+
 def get_cost(resource, point, layer, verbose=False):
     '''
     Get the cost of the given mapping point on given resource.

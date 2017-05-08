@@ -6,7 +6,7 @@ import cnn_mapping as cm
 
 class TestCostModel(unittest.TestCase):
 
-        
+            
     def test_simple(self):
         order_generator = cm.mapping_point_generator.order_generator_function(3, 2)
         self.assertEqual(next(order_generator), [(0,0), (1,1), (2,2)])
@@ -50,6 +50,19 @@ class TestCostModel(unittest.TestCase):
 
         #for mp in mp_generator:
         #    print mp.loop_blockings, mp.loop_orders    
+
+    def test_parationing_generator(self):
+        capacity_list = [512, 262144] 
+        access_cost_list = [1, 23] 
+        static_cost_list = [0.2, 512*0.2]  
+        para_count_list = [4, 4] 
+
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
+        layer = cm.Layer(64, 32, 8, 8, 3, 3, 1)
+        bp_generator = cm.mapping_point_generator.blocking_partitioning_generator_function(resource, layer)
+
+        for bp in bp_generator:
+            print bp[0], bp[1] 
 
 if __name__ == '__main__':
     unittest.main()

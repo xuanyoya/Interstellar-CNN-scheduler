@@ -5,6 +5,7 @@ Current implementation only supports the blocking factor and
 parallelism to be factors of the layer size 
 '''
 
+#from __future__ import division
 import itertools
 import copy
 
@@ -131,33 +132,112 @@ def blocking_generator_function(layer, num_level):
         yield list(tile) 
 
 '''
+def partition_loops(loops, para, num_level):
+   partitioned_loop = []
+   partitioned_para = []
+
+   para_factors = list(factors(para.count))     
+   for f in para_factors[1:]: #excluding 1
+       for i in xrange(len(loops)):
+           if f <= loops[i] : 
+               p = [1] * le.NUM
+               p[i] = f
+               l = list(loops)
+               l[i] = (loops[i] + f - 1) // f #ceiling division
+               partitioned_loop.append(l)      
+               partitioned_para.append(p)      
+        
+   return [partitioned_loop, partitioned_para]
+
+
+def partition_blocking(lp, resource):
+    num_level = resource.buffer_levels()
+
+    
+    partitioned_loops = []
+    partitioned_paras = []
+
+    para_index = [i for i, e in enumerate(resource.paras) if e != 1]    
+    for index in para_index:
+        para = resource.paras[index]
+        partitioned_loop, partitioned_para = partition_loops(lp[index], para, num_level)
+        partitioned_loops.append(partitioned_loop)
+        partitioned_paras.append(partitioned_para)
+    
+    iter_partition_loops = list(itertools.product(*partitioned_loops))
+    iter_partition_paras = list(itertools.product(*partitioned_paras))     
+    print iter_partition_loops
+    print iter_partition_paras
+    return [iter_partition_loops, iter_partition_paras]
+'''
+
+def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_loop, cur_factor, para_count):
+    if cur_loop == le.NUM -1 :
+        if cur_factor <= slb[le.NUM-1] : 
+            slp.append(cur_factor)
+            para_permutation.append(slp)
+        return
+    else :
+        for f in list(factors(cur_factor)) :
+            if f <= slb[cur_loop] :
+                new_slp = copy.copy(slp)
+                new_slp.append(f) #TODO not exact divide case 
+                current_level_recursive_partition_blocking(para_permutation, slb, new_slp, cur_loop+1, cur_factor/f, para_count)    
+
+
+def parallel_blocking_generator_function(lp, resource):
+    num_level = resource.buffer_levels()
+
+    para_index = [i for i, e in enumerate(resource.paras) if e != 1]
+    para_permutations = []
+    for index in para_index:
+        para = resource.paras[index]
+        para_permutation = []
+        current_level_recursive_partition_blocking(para_permutation, lp[index], [], 0, para.count, para.count) #FIXME check non-para level
+        para_permutations.append(para_permutation)
+
+    for partition in itertools.product(*para_permutations) :
+        yield partition
+
 def blocking_partitioning_generator_function(resource, layer):
     
     #loop_blocking_list and loop_partitioning_list generator.
     
-    blocking_generator = blocking_generator_function(layer, resource.buffer_levels)
+    num_level = resource.buffer_levels()
+    blocking_generator = blocking_generator_function(layer, num_level)
 
+    loop_partitioning_reshape = [(1,) * le.NUM] * num_level
+ 
     for loop_blocking in blocking_generator:
+        print "loop_blocking: ", loop_blocking
         loop_blocking_reshape = zip(*loop_blocking)
-        blocking_after_partition = []
-        partitioning_after_partition = []
-        for i in xrange(resource.buffer_levels()):
-            curr_para = resource.parallelism(i)
-            if curr_para.count == 1:
-                blocking_after_partition.append(loop_blocking_reshape[i])
-                partitioning_after_partition.append([1] * le.NUM)
-            else :
-                #The case that loops at the current level can be partitioned#
-                loop_tiles_to_partition = loop_blocking_reshape[i]
-                partitioned_result = partition_loops(loop_tiles_to_partition, curr_para.count)
-                blocking_after_partition.append(partitioned_result[0])
-                partitioning_after_partition.append(partitioned_result[1])
+        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource)
+        
+        for partition in pb_generator:
+            partitioned_loop_blocking_reshape = []
+            for level in xrange(num_level):
+                partitioned_loop_blocking_reshape.append([ (x+y-1) // y 
+                    for x, y in zip(loop_blocking_reshape[level], partition[level])])   #TODO check if using two maps with floordiv is faster 
+            blocking_list = zip(*partitioned_loop_blocking_reshape)
+            partitioning_list = zip(*partition)
+            yield [blocking_list, partitioning_list]
 
+        #iter_partition_loops, iter_partition_paras = partition_blocking(loop_blocking_reshape, resource)
+               
         #combine partitioned loop tiles to generate both 
         #   blocking_list and partitioning list 
-        for :
-            yield []
-'''    
+        '''
+        para_index = [i for i, e in enumerate(resource.paras) if e != 1]
+        for i in xrange(len(iter_partition_loops)):
+            for j in xrange(len(para_index)) :
+                index = para_index[j]
+                loop_blocking_reshape[index] = iter_partition_loops[i][j]
+                loop_partitioning_reshape[index] = iter_partition_paras[i][j]
+            blocking_list = zip(*loop_blocking_reshape) 
+            partitioning_list = zip(*loop_partitioning_reshape) 
+            yield [blocking_list, partitioning_list]
+        '''
+
 def valid_blocking_partitioning(resource, point, layer):
     for i in xrange(resource.buffer_levels()):
         if not cost_model.valid_mapping_point(resource, point, layer, i):

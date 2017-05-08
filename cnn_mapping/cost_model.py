@@ -209,7 +209,8 @@ def get_if_size(blocking_accum_list, partitioning_accum_list, layer):
 
     return width * height * \
     blocking_accum_list[le.IC] * partitioning_accum_list[le.IC] * \
-    blocking_accum_list[le.ON] * partitioning_accum_list[le.ON]
+    blocking_accum_list[le.ON] * partitioning_accum_list[le.ON] * \
+    partitioning_accum_list[le.OC] # Duplication when OC partitions
 
 def get_of_size(blocking_accum_list, partitioning_accum_list):
     '''
@@ -219,7 +220,9 @@ def get_of_size(blocking_accum_list, partitioning_accum_list):
     return blocking_accum_list[le.OX] * partitioning_accum_list[le.OX] * \
     blocking_accum_list[le.OY] * partitioning_accum_list[le.OY] * \
     blocking_accum_list[le.OC] * partitioning_accum_list[le.OC] * \
-    blocking_accum_list[le.ON] * partitioning_accum_list[le.ON]
+    blocking_accum_list[le.ON] * partitioning_accum_list[le.ON] * \
+    partitioning_accum_list[le.IC] * partitioning_accum_list[le.FX] * \
+    partitioning_accum_list[le.FY]  # Duplication when IC, FX or FY partitions
    
         
 def get_fl_size(blocking_accum_list, partitioning_accum_list):
@@ -230,7 +233,9 @@ def get_fl_size(blocking_accum_list, partitioning_accum_list):
     return blocking_accum_list[le.FX] * partitioning_accum_list[le.FX] * \
     blocking_accum_list[le.FY] * partitioning_accum_list[le.FY] * \
     blocking_accum_list[le.IC] * partitioning_accum_list[le.IC] * \
-    blocking_accum_list[le.OC] * partitioning_accum_list[le.OC]
+    blocking_accum_list[le.OC] * partitioning_accum_list[le.OC] * \
+    partitioning_accum_list[le.OX] * partitioning_accum_list[le.OY] *\
+    partitioning_accum_list[le.ON] # Duplication when OX, OY or ON partitions 
 
 
 def get_access(num_levels, point):
@@ -251,7 +256,7 @@ def get_access(num_levels, point):
     access_list = []
     for level in xrange(num_levels):
         if_block_access = get_if_access(level, point)
-        of_block_access = get_of_access(level, point)
+        of_block_access = 2 * get_of_access(level, point)
         fl_block_access = get_fl_access(level, point)
         access_list.append([if_block_access, of_block_access, fl_block_access])
 
@@ -302,7 +307,7 @@ def opt_get_access(num_levels, point):
     access_arr = np.zeros((num_levels, 3))
     for level in xrange(num_levels):
         access_arr[level][0] = opt_get_if_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
-        access_arr[level][1] = opt_get_of_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
+        access_arr[level][1] = 2 * opt_get_of_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
         access_arr[level][2] = opt_get_fl_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
     
     return access_arr
@@ -332,7 +337,7 @@ def get_block_sizes(num_levels, point, layer):
 
     return block_list
 
-
+#TODO check partitioned blocks fit in partitioned buffers
 def fit_in_level(cap, blocks):
     return sum(blocks) <= cap
 

@@ -237,6 +237,38 @@ def get_fl_size(blocking_accum_list, partitioning_accum_list):
     partitioning_accum_list[le.OX] * partitioning_accum_list[le.OY] *\
     partitioning_accum_list[le.ON] # Duplication when OX, OY or ON partitions 
 
+def get_if_bank_size(blocking_accum_list, layer):
+    '''
+    Get size of if block at current level
+    '''
+ 
+    fx_acc = blocking_accum_list[le.FX]  
+    fy_acc = blocking_accum_list[le.FY] 
+    ox_acc = blocking_accum_list[le.OX] 
+    oy_acc = blocking_accum_list[le.OY] 
+    width = fx_acc + (ox_acc - 1) * layer.wstd
+    height = fy_acc + (oy_acc - 1) * layer.hstd
+
+    return width * height * \
+    blocking_accum_list[le.IC] * blocking_accum_list[le.ON] 
+
+def get_of_bank_size(blocking_accum_list):
+    '''
+    Get size of of block at current level
+    '''
+ 
+    return blocking_accum_list[le.OX] * blocking_accum_list[le.OY] * \
+    blocking_accum_list[le.OC] *blocking_accum_list[le.ON]  
+   
+        
+def get_fl_bank_size(blocking_accum_list):
+    '''
+    Get size of fl block at current level
+    '''
+ 
+    return blocking_accum_list[le.FX] * blocking_accum_list[le.FY] * \
+    blocking_accum_list[le.IC] * blocking_accum_list[le.OC] 
+
 
 def get_access(num_levels, point):
     '''
@@ -312,6 +344,18 @@ def opt_get_access(num_levels, point):
     
     return access_arr
 
+def get_bank_size(point, layer, level):
+
+    blocking_accum_list = []
+    for i in xrange(le.NUM):
+        blocking_accum_list.append(reduce(mul, point.loop_blocking(i)[:level+1], 1))
+
+    if_bank_size = get_if_bank_size(blocking_accum_list, layer)
+    of_bank_size = get_of_bank_size(blocking_accum_list)
+    fl_bank_size = get_fl_bank_size(blocking_accum_list)
+
+    return (if_bank_size, of_bank_size, fl_bank_size)
+
 def get_block_size(point, layer, level):
 
     blocking_accum_list = []
@@ -327,34 +371,39 @@ def get_block_size(point, layer, level):
     return (if_block_size, of_block_size, fl_block_size)
 
 
+
 def get_block_sizes(num_levels, point, layer):
     '''
     Get size of ifmap, ofmap, filter 
     '''
+    bank_list = []
     block_list = []
     for level in xrange(num_levels):
         block_list.append(get_block_size(point, layer, level))
+        bank_list.append(get_bank_size(point, layer, level))
 
-    return block_list
+    return [bank_list, block_list]
 
-#TODO check partitioned blocks fit in partitioned buffers
 def fit_in_level(cap, blocks):
     return sum(blocks) <= cap
 
 def valid_partition(resource, point, level):
     max_parallelism = resource.parallelism(level).count
-
-    actual_parallelism = 1 
-    for i in xrange(le.NUM):
-        actual_parallelism *= point.loop_partitioning(i)[level]
-
+    actual_parallelism = reduce(mul, point.loop_partitionings[:][level], 1)
+ 
     return actual_parallelism <= max_parallelism  
 
-def valid_mapping_point(resource, point, layer, level):
+def valid_mapping_point_current_level(resource, point, layer, level):
     valid = fit_in_level(resource.buffer(level).capacity, 
-             get_block_size(point, layer, level)) \
+             get_bank_size(point, layer, level)) \
              and valid_partition(resource, point, level)    
     return valid 
+
+def valid_mapping_point(resource, point, layer):
+    for i in xrange(resource.buffer_levels()):
+        if not valid_mapping_point_current_level(resource, point, layer, i):
+            return False
+    return True
 
     
 def get_level_cost(resource, point, layer, level, verbose=False):
@@ -386,7 +435,8 @@ def get_cost(resource, point, layer, verbose=False):
     
     if verbose:
         print 'access_list: ', access_list
-        block_size_list = get_block_sizes(num_levels, point, layer)
+        bank_size_list, block_size_list = get_block_sizes(num_levels, point, layer)
+        print 'bank_size_list: ', bank_size_list 
         print 'block_size_list: ', block_size_list
         print 'layer_size: ', layer_size
 

@@ -13,8 +13,10 @@ class Buffer(namedtuple('Buffer',
 
     Buffer attributes include capacity, access cost, unit static cost.
 
-    Capacity is for a single buffer; access cost is the cost per access; unit
-    static cost is the static cost per time unit.
+    Capacity is for a single buffer (If current level has parallelsim, 
+    then it is the capacity of the buffer bank inside each parallel 
+    units); access cost is the cost per access; 
+    unit static cost is the static cost per time unit.
     '''
     pass
 

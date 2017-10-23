@@ -220,6 +220,7 @@ def blocking_partitioning_generator_function(resource, layer):
                     for x, y in zip(loop_blocking_reshape[level], partition[level])])   #TODO check if using two maps with floordiv is faster 
             blocking_list = zip(*partitioned_loop_blocking_reshape)
             partitioning_list = zip(*partition)
+            print blocking_list, partitioning_list
             yield [blocking_list, partitioning_list]
 
         #iter_partition_loops, iter_partition_paras = partition_blocking(loop_blocking_reshape, resource)
@@ -240,7 +241,7 @@ def blocking_partitioning_generator_function(resource, layer):
 
 def valid_blocking_partitioning(resource, point, layer):
     for i in xrange(resource.buffer_levels()):
-        if not cost_model.valid_mapping_point(resource, point, layer, i):
+        if not cost_model.valid_mapping_point_current_level(resource, point, layer, i):
             return False
 
     return True

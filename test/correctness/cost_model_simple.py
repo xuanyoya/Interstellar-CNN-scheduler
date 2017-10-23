@@ -8,7 +8,7 @@ class TestCostModel(unittest.TestCase):
 
     
     def test_simple(self):
-        capacity_list = [512, 16384, 262144, 2097152]
+        capacity_list = [512, 4096, 262144, 131072]
         access_cost_list = [1, 6, 23, 64]
         static_cost_list = [0.2, 32*0.2, 512*0.2, 4096*0.2] 
         para_count_list = [1, 4, 1, 16]
@@ -25,7 +25,7 @@ class TestCostModel(unittest.TestCase):
         self.assertEqual(cost, real_cost)
 
     def test_parallelism(self):   
-        capacity_list = [512, 16384, 262144]
+        capacity_list = [512, 4096, 16384]
         access_cost_list = [1, 6, 23]
         static_cost_list = [0.2, 32*0.2, 512*0.2] 
         para_count_list = [1, 4, 16]
@@ -42,9 +42,9 @@ class TestCostModel(unittest.TestCase):
         self.assertEqual(cost, real_cost)
 
 
-    ''' 
+     
     def test_buffer_too_large(self):
-        capacity_list = [512, 16384, 262144, 2097152]
+        capacity_list = [512, 4096, 262144, 131072]
         access_cost_list = [1, 6, 23, 64]
         static_cost_list = [0.2, 32*0.2, 512*0.2, 4096*0.2] 
         para_count_list = [1, 4, 1, 16]
@@ -56,12 +56,12 @@ class TestCostModel(unittest.TestCase):
         point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
         layer = cm.Layer(256, 128, 512, 512, 3, 3, 1)
-        cost = cm.cost_model.get_cost(resource, point, layer, True)
-        real_cost = float("inf")
-        self.assertEqual(cost, real_cost)
+        valid = cm.cost_model.valid_mapping_point(resource, point, layer)
+        self.assertEqual(valid, False)
 
+    
     def test_invalid_partition(self):
-        capacity_list = [512, 16384, 262144, 2097152]
+        capacity_list = [512, 4096, 262144, 131072]
         access_cost_list = [1, 6, 23, 64]
         static_cost_list = [0.2, 32*0.2, 512*0.2, 4096*0.2] 
         para_count_list = [1, 4, 1, 16]
@@ -73,12 +73,11 @@ class TestCostModel(unittest.TestCase):
         point = cm.MappingPoint(loop_order_list, loop_blockings_list, loop_partitionings_list)
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
         layer = cm.Layer(256, 128, 512, 512, 3, 3, 1)
-        cost = cm.cost_model.get_cost(resource, point, layer, True)
-        real_cost = float("inf")
-        self.assertEqual(cost, real_cost)
+        valid = cm.cost_model.valid_mapping_point(resource, point, layer)
+        self.assertEqual(valid, False)
 
     def test_invalide_parallelism(self):
-        capacity_list = [512, 16384, 262144, 2097152]
+        capacity_list = [512, 4096, 262144, 131072]
         access_cost_list = [1, 6, 23, 64]
         static_cost_list = [0.2, 32*0.2, 512*0.2, 4096*0.2] 
         para_count_list = [1, 4, 16, 1]
@@ -91,9 +90,8 @@ class TestCostModel(unittest.TestCase):
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
         layer = cm.Layer(64, 32, 8, 8, 3, 3, 1)
         cost = cm.cost_model.get_cost(resource, point, layer, True)
-        real_cost = float("inf")
-        self.assertEqual(cost, real_cost)
-   ''' 
+        valid = cm.cost_model.valid_mapping_point(resource, point, layer)
+        self.assertEqual(valid, False)
 
 if __name__ == '__main__':
     unittest.main()

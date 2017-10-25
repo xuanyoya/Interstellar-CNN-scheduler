@@ -157,7 +157,7 @@ def partition_blocking(lp, resource):
     partitioned_loops = []
     partitioned_paras = []
 
-    para_index = [i for i, e in enumerate(resource.paras) if e != 1]    
+    para_index = [i for i, e in enumerate(resource.paras) if e.count != 1]    
     for index in para_index:
         para = resource.paras[index]
         partitioned_loop, partitioned_para = partition_loops(lp[index], para, num_level)

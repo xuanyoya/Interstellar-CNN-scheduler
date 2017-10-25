@@ -16,16 +16,19 @@ class MappingPoint(object):
 
     Each set of loop partitioning factors is corresponding to number of parallelism of
     each loop at all all levels.
+
+    Partition mode is the access mode in parallelism case. 
+        0(default): access to next level of memory
+        1: access buffers in neighbor processing units
     '''
 
     def __init__(self, loop_order_list, loop_blockings_list,
-                 loop_partitionings_list, partition_mode=0):
+                 loop_partitionings_list):
         # NOTE(mgao12): no value validation here; cost model needs to abandon
         # invalid mapping.
         self.loop_orders = loop_order_list
         self.loop_blockings = loop_blockings_list
         self.loop_partitionings = loop_partitionings_list
-        self.partition_mode = partition_mode
 
     def loop_order(self, loop):
         '''

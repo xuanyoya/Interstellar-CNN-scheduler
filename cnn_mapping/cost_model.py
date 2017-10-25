@@ -18,7 +18,8 @@ def get_layer_size(layer):
  
     return [ifmap_size, ofmap_size, flmap_size]
 
-def get_if_access(level, point):
+
+def get_if_access(level, point, layer, mac_capacity):
     '''
     Get # access of if block at current level
 
@@ -30,6 +31,9 @@ def get_if_access(level, point):
     loop of ifmap-related loops, their blocking factors and parallelism counts
     at this level should also contribute to the number of accesses.
     '''
+    
+    if level == 0 and mac_capacity == 0:
+        return layer.wfil * layer.hfil * layer.nofm
     
     ex_order_index = min(point.loop_orders[le.OX][level], 
         point.loop_orders[le.OY][level], 
@@ -51,12 +55,15 @@ def get_if_access(level, point):
     return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
 
 
-def get_of_access(level, point):
+def get_of_access(level, point, layer, mac_capacity):
     '''
     Get # access of of block at current level
 
     See comments in routine for ifmap.
     '''
+
+    if level == 0 and mac_capacity == 0 :
+        return layer.wfil * layer.hfil * layer.nifm
 
     ex_order_index = min(point.loop_orders[le.OX][level], 
         point.loop_orders[le.OY][level], 
@@ -78,12 +85,15 @@ def get_of_access(level, point):
     return fx_acc * fy_acc * ic_acc * fx_par * fy_par * ic_par
    
         
-def get_fl_access(level, point):
+def get_fl_access(level, point, layer, mac_capacity):
     '''
     Get # access of fl block at current level
 
     See comments in routine for ifmap.
     '''
+
+    if level == 0 and mac_capacity == 0:
+        return layer.wofm * layer.hofm * layer.nimg
 
     ex_order_index = min(point.loop_orders[le.FX][level], 
         point.loop_orders[le.FY][level], 
@@ -270,7 +280,25 @@ def get_fl_bank_size(blocking_accum_list):
     blocking_accum_list[le.IC] * blocking_accum_list[le.OC] 
 
 
-def get_access(num_levels, point):
+def get_array_access(level, access_list, point):
+    '''
+    Get the access at array level from the access at the 
+    lower level of memory hierachy
+    '''
+
+    [if_block_access, of_block_access, fl_block_access] = access_list
+    partitions = zip(*point.loop_partitionings)[level]
+
+    array_if_block_access = if_block_access  * partitions[le.FX] * \
+                            partitions[le.FY] * partitions[le.OC]
+    array_of_block_access = of_block_access  * partitions[le.FX] * \
+                            partitions[le.FY] * partitions[le.IC]
+    array_fl_block_access = fl_block_access  * partitions[le.OX] * \
+                            partitions[le.OY] * partitions[le.ON]
+
+    return [array_if_block_access, array_of_block_access, array_fl_block_access] 
+
+def get_access(point, layer, resource):
     '''
     Get the total access of each block at each level,
     return the list as 
@@ -280,26 +308,50 @@ def get_access(num_levels, point):
     appear in higher level as well.
 
     For the parallelism case assume read from next memory level,
+    
+    Support more access modes in parallelism case
     '''
-    #TODO support more access modes in parallelism case
+    #TODO support unroll in outer loop, (not just at 1st level)
+    #     will affect access in paritioned units, seems not effect on
+    #     access at lower level
     #TODO support more customized memory
     #TODO more access at overlapped boundary
-    
+   
+ 
+    num_levels = resource.buffer_levels()
+    mac_capacity = resource.mac_capacity
+
     access_list = []
     for level in xrange(num_levels):
-        if_block_access = get_if_access(level, point)
-        of_block_access = 2 * get_of_access(level, point)
-        fl_block_access = get_fl_access(level, point)
+        if_block_access = get_if_access(level, point, layer, mac_capacity)
+        of_block_access = 2 * get_of_access(level, point, layer, mac_capacity)
+        fl_block_access = get_fl_access(level, point, layer, mac_capacity)
         access_list.append([if_block_access, of_block_access, fl_block_access])
 
+    para_mode = [e.access_mode for i, e in enumerate(resource.paras) if e.access_mode != 0]
+    if para_mode:
+        # access at array level 
+        para_mode_level = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
+        delta = 0
+        for level in para_mode_level:
+            if level + delta + 1 >= num_levels :
+                next_level_access = [1, 1, 1]
+            else:
+                next_level_access = access_list[level + delta + 1]
+            array_access = get_array_access(level, next_level_access, point) 
+            access_list.insert(level + delta + 1, array_access)
+            delta += 1
+ 
     return access_list
 
-def opt_get_access(num_levels, point):
+def opt_get_access(num_levels, point, mac_capacity):
     '''
     See the above function's comments. This function is just an
     optimized version of the above function 
     '''
     ''' blocking_accum_arr is reversed cumprod numpy array '''
+    #TODO support mac_capacity
+
     #blocking_arr = np.ones((le.NUM, num_levels+1))
     #partitioning_arr = np.ones((le.NUM, num_levels+1))
 
@@ -429,8 +481,10 @@ def get_cost(resource, point, layer, verbose=False):
     assert len(point.loop_blockings[0]) == num_levels, \
     "number of blockings does not match with number of memory " \
     "levels: %d" % num_levels 
-    
-    access_list  = get_access(num_levels, point)
+    para_mode = [e.access_mode for i, e in enumerate(resource.paras) if e.access_mode != 0]
+    addition_levels = len(para_mode)
+
+    access_list  = get_access(point, layer, resource)
     layer_size = get_layer_size(layer)
     
     if verbose:
@@ -441,7 +495,7 @@ def get_cost(resource, point, layer, verbose=False):
         print 'layer_size: ', layer_size
 
     total_cost = 0.0
-    for i in xrange(num_levels):
+    for i in xrange(num_levels + addition_levels):
         ''' List of total access of each buffer at level i'''
         buffer_access = map(mul, access_list[i], layer_size)
         total_cost += sum(buffer_access) * resource.access_cost[i]

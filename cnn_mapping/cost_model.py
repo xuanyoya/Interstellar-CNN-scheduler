@@ -19,7 +19,7 @@ def get_layer_size(layer):
     return [ifmap_size, ofmap_size, flmap_size]
 
 
-def get_if_access(level, point, layer, mac_capacity):
+def get_if_access(level, point, layer, mac_capacity = 1):
     '''
     Get # access of if block at current level
 
@@ -55,7 +55,7 @@ def get_if_access(level, point, layer, mac_capacity):
     return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
 
 
-def get_of_access(level, point, layer, mac_capacity):
+def get_of_access(level, point, layer, mac_capacity = 1):
     '''
     Get # access of of block at current level
 
@@ -85,7 +85,7 @@ def get_of_access(level, point, layer, mac_capacity):
     return fx_acc * fy_acc * ic_acc * fx_par * fy_par * ic_par
    
         
-def get_fl_access(level, point, layer, mac_capacity):
+def get_fl_access(level, point, layer, mac_capacity = 1):
     '''
     Get # access of fl block at current level
 
@@ -460,9 +460,9 @@ def valid_mapping_point(resource, point, layer):
     
 def get_level_cost(resource, point, layer, level, verbose=False):
     layer_size = get_layer_size(layer)
-    level_access = [get_if_access(level, point), \
-                    get_of_access(level, point), \
-                    get_fl_access(level, point)] 
+    level_access = [get_if_access(level, point, layer), \
+                    2 * get_of_access(level, point, layer), \
+                    get_fl_access(level, point, layer)] 
 
     buffer_access = map(mul, level_access, layer_size)
     level_cost = sum(buffer_access) * resource.access_cost[level]

@@ -247,15 +247,21 @@ def valid_blocking_partitioning(resource, point, layer):
     return True
 
 
-def get_best_loop_order(resource, layer, bp, num_loops, num_levels, verbose=False):
+def opt_get_best_loop_order(resource, layer, bp, verbose=False):
+    '''
+    When no paritioning, the cost of the current level only depends on the current 
+    level loop orders, given the blocking factors. Thus we can leverage this to 
+    find the best loop order for each level individually. 
+    '''
+    num_levels = resource.buffer_levels()
     best_loop_order = []
     dummy_partitioning = [(1,) * num_levels] * le.NUM 
 
     best_cost = 0
     for level in xrange(num_levels):
         smallest_cost = float("inf") 
-        for curr_level_order in level_order_generator_function(bp, num_loops, num_levels):
-            dummy_loop_order = [[0] * num_loops] * num_levels 
+        for curr_level_order in level_order_generator_function(bp, le.NUM, num_levels):
+            dummy_loop_order = [[0] * le.NUM] * num_levels 
             dummy_loop_order[level] = curr_level_order
             #print zip(*dummy_loop_order)
             mapping_point = MappingPoint(zip(*dummy_loop_order), bp, dummy_partitioning)        
@@ -296,7 +302,7 @@ def opt_mapping_point_generator_function(resource, layer, verbose=False):
         dummy_mapping_point = MappingPoint(None, blocking_partitioning, dummy_partitioning)
         #print "blocking_partitioning: ", blocking_partitioning
         if valid_blocking_partitioning(resource, dummy_mapping_point, layer):
-            cost, loop_order = get_best_loop_order(resource, layer, blocking_partitioning, le.NUM, num_levels)
+            cost, loop_order = opt_get_best_loop_order(resource, layer, blocking_partitioning)
             if cost < smallest_cost:
                 smallest_cost = cost
                 best_mapping_point = MappingPoint(loop_order, blocking_partitioning, dummy_partitioning)

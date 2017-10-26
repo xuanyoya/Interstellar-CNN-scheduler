@@ -13,9 +13,9 @@ def optimizer(resource, layer, verbose=False):
     record the mapping_point with the smallest cost
     '''
     smallest_cost, best_mapping_point = mapping_point_generator.opt_mapping_point_generator_function(resource, layer)
-    '''
+    ''' 
     smallest_cost = float("inf")
-    mp_generator = mapping_point_generator.opt_mapping_point_generator_function(resource, layer)
+    mp_generator = mapping_point_generator.mapping_point_generator_function(resource, layer)
 
     
     #counter = 0

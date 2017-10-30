@@ -21,7 +21,7 @@ class Buffer(namedtuple('Buffer',
     pass
 
 class Parallelism(namedtuple('Parallelism',
-                             ['count', 'access_mode'])):
+                             ['count', 'access_mode', 'array_access_cost'])):
     '''
     Parallelism specification.
 
@@ -34,6 +34,8 @@ class Parallelism(namedtuple('Parallelism',
     Access mode is the mode of access non-private data, 
     for example, whether access neighborhood PE, or 
     goes to next level buffer.
+
+    Array access cost is the cost of accessing array level buffers.
     
     Note: shared buffer level is the level
     index of the lowest shared buffer for this parallelism.
@@ -50,9 +52,9 @@ class Resource(object):
 
     def __init__(self, buf_capacity_list, buf_access_cost_list,
                  buf_unit_static_cost_list, para_count_list, 
-                 mac_capacity=1, partition_mode=None):
+                 mac_capacity=1, partition_mode=None, array_access_cost=None):
         # Buffers.
-        assert len(buf_capacity_list) <= len(buf_access_cost_list)
+        assert len(buf_capacity_list) == len(buf_access_cost_list)
         assert len(buf_capacity_list) == len(buf_unit_static_cost_list)
         
         self.bufs = [Buffer(*t) for t in zip(buf_capacity_list, \
@@ -62,16 +64,22 @@ class Resource(object):
         if not partition_mode :
             partition_mode = [0] * len(para_count_list)
         else :
+            array_access_costs = [None] * len(para_count_list)
+            array_level = 0
             for i in xrange(len(para_count_list)):
                 # when using non-default partition mode, the parallelism
                 # count needs to be large than 1
                 assert partition_mode[i] == 0 or para_count_list <= 1 \
                        or (partition_mode[i] > 0 and para_count_list > 1)
+                if partition_mode[i] == 1 :
+                    array_access_costs[i] = array_access_cost[array_level]
+                    array_level += 1
  
         self.paras = [Parallelism(*t) for t in zip(para_count_list, \
-            partition_mode)]
+            partition_mode, array_access_costs)]
         self.access_cost = buf_access_cost_list
         self.mac_capacity = mac_capacity
+        self.array_access_cost = array_access_cost
 
     def buffer_levels(self):
         '''

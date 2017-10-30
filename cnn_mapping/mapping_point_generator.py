@@ -290,6 +290,7 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
     #dummy_partitioning = [(1,) * num_levels] * le.NUM 
 
     best_cost = 0
+    para_level = 0
     for level in xrange(num_levels):
         smallest_cost = float("inf") 
         for curr_level_order in level_order_generator_function(point, le.NUM, num_levels):
@@ -297,7 +298,11 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
             dummy_loop_order[level] = curr_level_order
             #print zip(*dummy_loop_order)
             mapping_point = MappingPoint(zip(*dummy_loop_order), blocking, partitioning)        
-            curr_cost = cost_model.get_level_cost(resource, mapping_point, layer, level, verbose)
+            if level <= 0 or resource.paras[level-1].count <= 1 \
+                or resource.paras[level-1].access_mode < 1:
+                curr_cost = cost_model.get_level_cost(resource, mapping_point, layer, level, verbose)
+            else:
+                curr_cost = cost_model.get_array_and_curr_level_cost(resource, mapping_point, layer, level, verbose) 
             if curr_cost < smallest_cost:
                 best_curr_level_order = curr_level_order 
                 smallest_cost = curr_cost
@@ -359,7 +364,7 @@ def mapping_point_generator_function(resource, layer, hint=None, verbose=False):
     num_levels = resource.buffer_levels()
 
     blocking_partitioning_generator = \
-        blocking_partitioning_generator_function(resource, layer)
+        blocking_partitioning_generator_function(resource, layer, hint)
         #blocking_generator_function(layer, num_levels, hint) 
 
     for blocking_partitioning in blocking_partitioning_generator:

@@ -76,7 +76,7 @@ class TestCostModel(unittest.TestCase):
     
     def test_tile_generator_hint1(self):
         capacity_list = [512, 131072]
-        access_cost_list = [1, 2, 64]
+        access_cost_list = [1, 64]
         static_cost_list = [0.2, 4096*0.2]
         para_count_list = [12, 1]
 
@@ -86,7 +86,7 @@ class TestCostModel(unittest.TestCase):
                          cm.le.OX: [[4, 1, 1], None], cm.le.OC: [[5, 1, 1], None],
                          cm.le.ON: [[6, 1, 1], None]}
 
-        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [1, 0], [2])
         layer = cm.Layer(64, 32, 8, 8, 3, 3, 1)
         tile_generator = cm.mapping_point_generator.blocking_partitioning_generator_function(resource, layer, schedule_hint)    
         expect_result = [[(3, 1), (1, 1), (1, 8), (1, 2), (1, 32), (8, 8), (1, 1)], [(1, 1), (3, 1), (1, 1), (4, 1), (1, 1), (1, 1), (1, 1)]]
@@ -94,7 +94,7 @@ class TestCostModel(unittest.TestCase):
 
     def test_tile_generator_hint2(self):
         capacity_list = [512, 131072, 2097152]
-        access_cost_list = [1, 2, 6, 64]
+        access_cost_list = [1, 6, 64]
         static_cost_list = [0.2, 32*0.2, 4096*0.2]
         para_count_list = [12, 1, 1]
 
@@ -104,7 +104,7 @@ class TestCostModel(unittest.TestCase):
                          cm.le.OX: [[4, 1, 1], None, None], cm.le.OC: [[5, 1, 1], None, None],
                          cm.le.ON: [[6, 1, 1], None, None]}
 
-        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [1, 0, 0], [2])
         layer = cm.Layer(64, 32, 8, 8, 3, 3, 1)
         tile_generator = cm.mapping_point_generator.blocking_partitioning_generator_function(resource, layer, schedule_hint)    
         #tile_generator = cm.mapping_point_generator.blocking_generator_function(layer,3, schedule_hint)    

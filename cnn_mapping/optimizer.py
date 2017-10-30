@@ -13,18 +13,19 @@ def opt_optimizer(resource, layer, hint=None, verbose=False):
     record the mapping_point with the smallest cost
     '''
     smallest_cost, best_mapping_point = mapping_point_generator.opt_mapping_point_generator_function(resource, layer, hint, verbose)
-    cost_model.get_cost(resource, best_mapping_point, layer, verbose)
-
+    total_cost = cost_model.get_cost(resource, best_mapping_point, layer, verbose)
+  
+    #assert total_cost == smallest_cost
     if verbose:
         print smallest_cost
-        print "Best mapping_point: ", best_mapping_point.loop_blockings, best_mapping_point.loop_orders
+        print "Best mapping_point: ", best_mapping_point.loop_blockings, best_mapping_point.loop_partitionings, best_mapping_point.loop_orders
 
     return [smallest_cost, best_mapping_point]
  
 def optimizer(resource, layer, hint=None, verbose=False):
      
     smallest_cost = float("inf")
-    mp_generator = mapping_point_generator.mapping_point_generator_function(resource, layer, verbose)
+    mp_generator = mapping_point_generator.mapping_point_generator_function(resource, layer, hint, verbose)
 
     
     #counter = 0
@@ -45,7 +46,7 @@ def optimizer(resource, layer, hint=None, verbose=False):
     
     if verbose:
         print smallest_cost
-        print "Best mapping_point: ", best_mapping_point.loop_blockings, best_mapping_point.loop_orders
+        print "Best mapping_point: ", best_mapping_point.loop_blockings, mapping_point.loop_partitionings, best_mapping_point.loop_orders
 
     return [smallest_cost, best_mapping_point] 
 

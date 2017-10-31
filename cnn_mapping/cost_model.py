@@ -448,8 +448,12 @@ def valid_partition(resource, partitioning, level):
     return actual_parallelism <= max_parallelism  
 
 def valid_mapping_point_current_level(resource, point, layer, level, verbose=False):
-    valid_size = fit_in_level(resource.buffer(level).capacity, 
+    if resource.paras[level].count > 1:
+        valid_size = fit_in_level(resource.buffer(level).capacity, 
              get_bank_size(point, layer, level)) 
+    else :
+        valid_size = fit_in_level(resource.buffer(level).capacity, 
+             get_block_size(point, layer, level)) 
 
     partitioning = zip(*(point.loop_partitionings)) 
     valid_para = valid_partition(resource, partitioning, level)    
@@ -553,7 +557,7 @@ def get_block_cost(resource, point, layer, verbose=False):
         print "block_cost ", block_cost
         block_costs = map(add, block_cost, block_costs)
 
-    if verbose == 2:
+    if verbose:
         print 'access_list: ', access_list
         bank_size_list, block_size_list = get_block_sizes(num_levels, point, layer)
         print 'bank_size_list: ', bank_size_list 
@@ -588,7 +592,7 @@ def get_cost(resource, point, layer, verbose=False):
         buffer_access = map(mul, access_list[i], layer_size)
         total_cost += sum(buffer_access) * total_access_cost[i]
  
-    if verbose == 2:
+    if verbose:
         print 'access_cost: ', total_access_cost
         print 'access_list: ', access_list
         bank_size_list, block_size_list = get_block_sizes(num_levels, point, layer)

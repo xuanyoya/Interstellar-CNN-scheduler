@@ -5,7 +5,8 @@ import unittest
 import cnn_mapping as cm 
 
 class TestOptimizer(unittest.TestCase):
-    '''
+
+    '''    
     def test_simple(self):
         capacity_list = [512, 262144] #[512, 16384, 262144, 2097152]
         access_cost_list = [1, 23] #[1, 6, 23, 64]

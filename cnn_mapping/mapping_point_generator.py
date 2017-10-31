@@ -83,14 +83,10 @@ def opt_order_generator_function(point, num_loops, num_levels):
     for loop_order in itertools.product(*all_order_permutations):
         yield zip(*loop_order)
     
-def level_order_generator_function(point, num_loops, num_levels):
-    non_empty_loops = get_non_empty_loops(point, num_levels)
-    #print "non_empty_loops: ", non_empty_loops
+def level_order_generator_function(point, num_loops, non_empty_loops, level):
  
-    for level in xrange(num_levels):
-        one_level_permutations = []
-        for order in itertools.permutations(range(len(non_empty_loops[level]))):
-            yield get_loop_order(order, non_empty_loops, level)
+    for order in itertools.permutations(range(len(non_empty_loops[level]))):
+        yield get_loop_order(order, non_empty_loops, level)
    
 def order_generator_function(num_loops, num_levels):
     '''
@@ -288,12 +284,13 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
     blocking = point.loop_blockings
     partitioning = point.loop_partitionings
     #dummy_partitioning = [(1,) * num_levels] * le.NUM 
+    non_empty_loops = get_non_empty_loops(point, num_levels)
 
     best_cost = 0
     para_level = 0
     for level in xrange(num_levels):
         smallest_cost = float("inf") 
-        for curr_level_order in level_order_generator_function(point, le.NUM, num_levels):
+        for curr_level_order in level_order_generator_function(point, le.NUM, non_empty_loops, level):
             dummy_loop_order = [[0] * le.NUM] * num_levels 
             dummy_loop_order[level] = curr_level_order
             #print zip(*dummy_loop_order)
@@ -309,7 +306,6 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
         best_loop_order.append(best_curr_level_order)
         best_cost += smallest_cost
 
-    #print zip(*best_loop_order)
     return best_cost, zip(*best_loop_order)
 
 def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=False):
@@ -348,6 +344,7 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
                 smallest_cost = cost
                 best_mapping_point = MappingPoint(loop_order, blocking, partitioning)
                 if verbose:
+                    print "best loop order: ", best_mapping_point.loop_orders
                     print "Update smallest cost: ", smallest_cost
                     print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
     assert best_mapping_point, "No valid mapping point found."

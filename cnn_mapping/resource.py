@@ -61,10 +61,10 @@ class Resource(object):
             buf_access_cost_list, buf_unit_static_cost_list)]
 
         # Parallelism.
+        array_access_costs = [None] * len(para_count_list)
         if not partition_mode :
             partition_mode = [0] * len(para_count_list)
         else :
-            array_access_costs = [None] * len(para_count_list)
             array_level = 0
             for i in xrange(len(para_count_list)):
                 # when using non-default partition mode, the parallelism

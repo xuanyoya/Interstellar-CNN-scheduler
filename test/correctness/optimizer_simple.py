@@ -29,9 +29,14 @@ class TestOptimizer(unittest.TestCase):
         para_count_list = [12, 1]
 
         # {loop: [level, order, blocking, partitioning]}
-        schedule_hint = {cm.le.FX: [[0, 3, 1], None], cm.le.IC: [[1, 8, 1], None],
-                         cm.le.FY: [[2, 1, 3], None], cm.le.OY: [[3, 1, 4], None],
-                         cm.le.OX: [[4, 1, 1], None], cm.le.OC: [[5, 1, 1], None],
+        #schedule_hint = {cm.le.FX: [[0, 3, 1], None], cm.le.IC: [[1, 8, 1], None],
+        #                 cm.le.FY: [[2, 1, 3], None], cm.le.OY: [[3, 1, 4], None],
+        #                 cm.le.OX: [[4, 1, 1], None], cm.le.OC: [[5, 1, 1], None],
+        #                 cm.le.ON: [[6, 1, 1], None]}
+
+        schedule_hint = {cm.le.FX: [[0, 3, 1], None], 
+                         cm.le.FY: [[2, 1, 3], None], cm.le.OY: [[3, None, 4], None],
+                         cm.le.OX: [[4, 1, 1], None], 
                          cm.le.ON: [[6, 1, 1], None]}
 
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [1, 0], [2])

@@ -495,7 +495,7 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
     buffer_access = map(mul, level_access, layer_size)
     level_cost = sum(buffer_access) * resource.paras[level].array_access_cost
 
-    if verbose == 2:
+    if verbose >= 2:
         print "Level ", level, " array level access: ", level_access 
  
     return level_cost
@@ -513,7 +513,7 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
 
     level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access)
 
-    if verbose == 2:
+    if verbose >= 2:
         print "Level ", level, " access: ", level_access 
  
     return level_cost
@@ -529,7 +529,7 @@ def get_level_cost(resource, point, layer, level, verbose=False):
     buffer_access = map(mul, level_access, layer_size)
     level_cost = sum(buffer_access) * resource.access_cost[level]
 
-    if verbose == 2:
+    if verbose >= 2:
         print "Level ", level, " access: ", level_access 
     return level_cost
 

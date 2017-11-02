@@ -25,12 +25,14 @@ def get_fixed_partitioning(num_levels, hint):
 
     if not hint:
         return [(1,) * num_levels] * le.NUM  
+
     partitioning_list = [] 
-    for t in hint:
+    for loop in xrange(le.NUM):
         partitioning = [1] * num_levels
-        for i in xrange(num_levels):
-            if hint[t][i]:
-                partitioning[i] = hint[t][i][2]
+        if loop in hint:
+            for i in xrange(num_levels):
+                if hint[loop][i]:
+                    partitioning[i] = hint[loop][i][2]
         partitioning_list.append(tuple(partitioning))
     return partitioning_list 
 
@@ -126,20 +128,30 @@ def recursive_tile(tile_permutations, curr_loop_tile, n, curr_level, num_level):
         new_loop_tile = copy.copy(curr_loop_tile)
         new_loop_tile.append(i)
         recursive_tile(tile_permutations, new_loop_tile, n/i, curr_level+1, num_level)
-            
+
+
+def loop_tile_with_para_hint(tile_permutations, loop_extent, num_level, loop_hint=None):
+    para_hint = loop_hint[0][2]
+    #TODO use faster way for this checking
+    for i in factors(loop_extent):
+        if i >= para_hint :
+            recursive_tile(tile_permutations, [i], loop_extent/i, 1, num_level)         
+  
  
 def loop_tile(loop_extent, num_level, loop_hint=None):
-
+    
     tile_permutations = []
     if not loop_hint:
-        recursive_tile(tile_permutations, [], loop_extent, 0, num_level)    
-    else :
+        recursive_tile(tile_permutations, [], loop_extent, 0, num_level)   
+    elif loop_hint[0][1] and loop_hint[0][2]:
         #TODO hint not only at 1st level
         #TODO not exact divide case
         blocking_factor = loop_hint[0][1] * loop_hint[0][2] 
         new_loop_extent = loop_extent/(blocking_factor)
         recursive_tile(tile_permutations, [blocking_factor], 
                               new_loop_extent, 1, num_level)
+    else:
+        loop_tile_with_para_hint(tile_permutations, loop_extent, num_level, loop_hint)
 
     return tile_permutations
 
@@ -303,6 +315,8 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
             if curr_cost < smallest_cost:
                 best_curr_level_order = curr_level_order 
                 smallest_cost = curr_cost
+            if resource.mac_capacity == 0 and level == 0:
+                break
         best_loop_order.append(best_curr_level_order)
         best_cost += smallest_cost
 
@@ -333,7 +347,7 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
            at this early stage, so that we can avoid generating all the loop orders for 
            an invalid blocking_partitioning 
         '''
-        if verbose == 2:
+        if verbose >= 2:
             print "Find best order for schedule: ", blocking_partitioning
         [blocking, partitioning] = blocking_partitioning
         dummy_mapping_point = MappingPoint(None, blocking, partitioning)

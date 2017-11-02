@@ -77,7 +77,7 @@ class TestOptimizer(unittest.TestCase):
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
         layer = cm.Layer(16, 32, 8, 8, 3, 3, 1)
         cm.optimizer.optimizer(resource, layer, True)
-    '''
+    
 
     def test_alex_conv2(self):
         capacity_list = [512/2, 131072/2, 2097152*256]
@@ -86,7 +86,7 @@ class TestOptimizer(unittest.TestCase):
         para_count_list = [256, 1, 1]
 
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [1, 0, 0], [2])
-        layer = cm.Layer(48, 256, 28, 28, 5, 5, 16)
+        layer = cm.Layer(48, 256, 28, 28, 5, 5, 1)
         opt_result = cm.optimizer.opt_optimizer(resource, layer, None, True)
         level0 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 0)
         level1 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 1)
@@ -111,7 +111,7 @@ class TestOptimizer(unittest.TestCase):
         level00 = cm.cost_model.get_array_and_curr_level_cost(resource, opt_result[1], layer, 1) - level1
         print level0, level00, level1, level2
         cm.utils.print_loop_nest(opt_result[1])
-    '''
+    
 
 if __name__ == '__main__':
     unittest.main()

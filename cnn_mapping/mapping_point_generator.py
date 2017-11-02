@@ -241,7 +241,7 @@ def parallel_blocking_generator_function(lp, resource):
 
     for partition in itertools.product(*para_permutations) :
         yield partition
-
+'''
 def blocking_partitioning_generator_function(resource, layer, hint=None):
     
     #loop_blocking_list and loop_partitioning_list generator.
@@ -282,7 +282,7 @@ def blocking_partitioning_generator_function(resource, layer, hint=None):
             blocking_list = zip(*partitioned_loop_blocking_reshape)
             partitioning_list = zip(*partition)
             yield [blocking_list, partitioning_list]
-'''    
+    
         
 
 def opt_get_best_loop_order(resource, layer, point, verbose=False):

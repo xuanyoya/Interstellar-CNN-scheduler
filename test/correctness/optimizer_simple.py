@@ -20,7 +20,7 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(opt_result[0], result[0])
         self.assertEqual(opt_result[1].loop_orders, result[1].loop_orders)
     
-    '''
+    
 
     def test_hint(self):
         capacity_list = [512, 131072]
@@ -46,8 +46,8 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(opt_result[0], result[0])
         self.assertEqual(opt_result[1].loop_orders, result[1].loop_orders)
  
-    '''
-    def test_hint(self):
+    
+    def test_hint1(self):
         
         capacity_list = [512, 131072, 2097152]
         access_cost_list = [1, 2, 6, 200]
@@ -77,6 +77,40 @@ class TestOptimizer(unittest.TestCase):
         resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list)
         layer = cm.Layer(16, 32, 8, 8, 3, 3, 1)
         cm.optimizer.optimizer(resource, layer, True)
+    '''
+
+    def test_alex_conv2(self):
+        capacity_list = [512/2, 131072/2, 2097152*256]
+        access_cost_list = [1, 6, 200]
+        static_cost_list = [0, 0, 0]
+        para_count_list = [256, 1, 1]
+
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [1, 0, 0], [2])
+        layer = cm.Layer(48, 256, 28, 28, 5, 5, 16)
+        opt_result = cm.optimizer.opt_optimizer(resource, layer, None, True)
+        level0 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 0)
+        level1 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 1)
+        level2 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 2)
+        level00 = cm.cost_model.get_array_and_curr_level_cost(resource, opt_result[1], layer, 1) - level1
+        print level0, level00, level1, level2
+        cm.utils.print_loop_nest(opt_result[1])
+   
+    '''
+    def test_alex_conv3(self):
+        capacity_list = [512/2, 131072/2, 2097152*256]
+        access_cost_list = [1, 6, 200]
+        static_cost_list = [0, 0, 0]
+        para_count_list = [256, 1, 1]
+
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [1, 0, 0], [2])
+        layer = cm.Layer(256, 384, 13, 13, 3, 3, 1)
+        opt_result = cm.optimizer.opt_optimizer(resource, layer, None, True)
+        level0 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 0)
+        level1 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 1)
+        level2 = cm.cost_model.get_level_cost(resource, opt_result[1], layer, 2)
+        level00 = cm.cost_model.get_array_and_curr_level_cost(resource, opt_result[1], layer, 1) - level1
+        print level0, level00, level1, level2
+        cm.utils.print_loop_nest(opt_result[1])
     '''
 
 if __name__ == '__main__':

@@ -241,11 +241,11 @@ def parallel_blocking_generator_function(lp, resource):
 
     for partition in itertools.product(*para_permutations) :
         yield partition
-'''
-def blocking_partitioning_generator_function(resource, layer, hint=None):
+
+def blocking_partitioning_generator_function_with_hint(resource, layer, hint):
     
     #loop_blocking_list and loop_partitioning_list generator.
-    
+    assert hint    
     num_level = resource.buffer_levels()
     blocking_generator = blocking_generator_function(layer, num_level, hint)
 
@@ -260,13 +260,13 @@ def blocking_partitioning_generator_function(resource, layer, hint=None):
        blocking_list = zip(*partitioned_loop_blocking_reshape)
        yield [blocking_list, partitioning_list]
 
-'''
-def blocking_partitioning_generator_function(resource, layer, hint=None):
+
+def blocking_partitioning_generator_function(resource, layer):
     
     #loop_blocking_list and loop_partitioning_list generator.
     
     num_level = resource.buffer_levels()
-    blocking_generator = blocking_generator_function(layer, num_level, hint)
+    blocking_generator = blocking_generator_function(layer, num_level, None)
 
     for loop_blocking in blocking_generator:
         print "loop_blocking: ", loop_blocking
@@ -331,8 +331,12 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
 
     num_levels = resource.buffer_levels()
 
-    blocking_partitioning_generator = \
-        blocking_partitioning_generator_function(resource, layer, hint)
+    if not hint:
+        blocking_partitioning_generator = \
+            blocking_partitioning_generator_function(resource, layer)
+    else :
+         blocking_partitioning_generator = \
+            blocking_partitioning_generator_function_with_hint(resource, layer, hint)
         #blocking_generator_function(layer, num_levels, hint) 
 
     #dummy_partitioning = [(1,) * num_levels] * le.NUM  

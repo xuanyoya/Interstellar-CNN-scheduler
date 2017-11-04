@@ -207,7 +207,7 @@ def opt_get_fl_access(level, point, ba_arr, pa_arr):
 
 
 
-def get_if_size(blocking_accum_list, partitioning_accum_list, layer):
+def get_if_size(blocking_accum_list, partitioning_accum_list, partitioning_list, layer):
     '''
     Get size of if block at current level
     '''
@@ -222,9 +222,9 @@ def get_if_size(blocking_accum_list, partitioning_accum_list, layer):
     return width * height * \
     blocking_accum_list[le.IC] * partitioning_accum_list[le.IC] * \
     blocking_accum_list[le.ON] * partitioning_accum_list[le.ON] * \
-    partitioning_accum_list[le.OC] # Duplication when OC partitions
+    partitioning_list[le.OC] # Duplication when OC partitions
 
-def get_of_size(blocking_accum_list, partitioning_accum_list):
+def get_of_size(blocking_accum_list, partitioning_accum_list, partitioning_list):
     '''
     Get size of of block at current level
     '''
@@ -233,11 +233,11 @@ def get_of_size(blocking_accum_list, partitioning_accum_list):
     blocking_accum_list[le.OY] * partitioning_accum_list[le.OY] * \
     blocking_accum_list[le.OC] * partitioning_accum_list[le.OC] * \
     blocking_accum_list[le.ON] * partitioning_accum_list[le.ON] * \
-    partitioning_accum_list[le.IC] * partitioning_accum_list[le.FX] * \
-    partitioning_accum_list[le.FY]  # Duplication when IC, FX or FY partitions
+    partitioning_list[le.IC] * partitioning_list[le.FX] * \
+    partitioning_list[le.FY]  # Duplication when IC, FX or FY partitions
    
         
-def get_fl_size(blocking_accum_list, partitioning_accum_list):
+def get_fl_size(blocking_accum_list, partitioning_accum_list, partitioning_list):
     '''
     Get size of fl block at current level
     '''
@@ -246,8 +246,8 @@ def get_fl_size(blocking_accum_list, partitioning_accum_list):
     blocking_accum_list[le.FY] * partitioning_accum_list[le.FY] * \
     blocking_accum_list[le.IC] * partitioning_accum_list[le.IC] * \
     blocking_accum_list[le.OC] * partitioning_accum_list[le.OC] * \
-    partitioning_accum_list[le.OX] * partitioning_accum_list[le.OY] *\
-    partitioning_accum_list[le.ON] # Duplication when OX, OY or ON partitions 
+    partitioning_list[le.OX] * partitioning_list[le.OY] *\
+    partitioning_list[le.ON] # Duplication when OX, OY or ON partitions 
 
 def get_if_bank_size(blocking_accum_list, layer):
     '''
@@ -415,13 +415,15 @@ def get_block_size(point, layer, level):
 
     blocking_accum_list = []
     partitioning_accum_list = []
+    partitioning_reshape = zip(*point.loop_partitionings)
+    partitioning_list = partitioning_reshape[level]
     for i in xrange(le.NUM):
         blocking_accum_list.append(reduce(mul, point.loop_blocking(i)[:level+1], 1))
         partitioning_accum_list.append(reduce(mul, point.loop_partitioning(i)[:level+1], 1)) #FIXME inclusive mode also duplicates data
-
-    if_block_size = get_if_size(blocking_accum_list, partitioning_accum_list, layer)
-    of_block_size = get_of_size(blocking_accum_list, partitioning_accum_list)
-    fl_block_size = get_fl_size(blocking_accum_list, partitioning_accum_list)
+    
+    if_block_size = get_if_size(blocking_accum_list, partitioning_accum_list, partitioning_list, layer)
+    of_block_size = get_of_size(blocking_accum_list, partitioning_accum_list, partitioning_list)
+    fl_block_size = get_fl_size(blocking_accum_list, partitioning_accum_list, partitioning_list)
 
     return (if_block_size, of_block_size, fl_block_size)
 
@@ -442,10 +444,18 @@ def get_block_sizes(num_levels, point, layer):
 def fit_in_level(cap, blocks):
     return sum(blocks) <= cap
 
-def valid_partition(resource, partitioning, level):
+def valid_partition_number(resource, partitioning, level):
     max_parallelism = resource.parallelism(level).count
     actual_parallelism = reduce(mul, partitioning[level], 1)
     return actual_parallelism <= max_parallelism  
+
+def valid_partitioning_current_level(resource, point, layer, level, verbose=False):
+    valid_size = fit_in_level(resource.buffer(level).capacity, 
+             get_bank_size(point, layer, level)) 
+
+    partitioning = zip(*(point.loop_partitionings)) 
+    valid_para = valid_partition_number(resource, partitioning, level)    
+    return valid_size and valid_para
 
 def valid_mapping_point_current_level(resource, point, layer, level, verbose=False):
     if resource.paras[level].count > 1:
@@ -456,13 +466,28 @@ def valid_mapping_point_current_level(resource, point, layer, level, verbose=Fal
              get_block_size(point, layer, level)) 
 
     partitioning = zip(*(point.loop_partitionings)) 
-    valid_para = valid_partition(resource, partitioning, level)    
+    valid_para = valid_partition_number(resource, partitioning, level)    
     
     if verbose == 3:
         print "Level ", level, ": Partitioned block size fit in bank: ", valid_size
         print "Level ", level, ": Partition number is valid: ", valid_para
     
     return valid_size and valid_para 
+
+def valid_partitioning(resource, point, layer, verbose=False):
+    para_level = [i for i, e in enumerate(resource.paras) if e.count != 0]
+    for level in para_level:
+        if not valid_partitioning_current_level(resource, point, layer, level, verbose):
+            return False
+    return True
+
+def valid_blocking_size(resource, point, layer, verbose=False):
+    for level in xrange(resource.buffer_levels()):
+        if not fit_in_level(resource.buffer(level).capacity * resource.paras[level].count, 
+            get_block_size(point, layer, level)):
+            return False
+    return True 
+
 
 def valid_mapping_point(resource, point, layer, verbose=False):
     for i in xrange(resource.buffer_levels()):

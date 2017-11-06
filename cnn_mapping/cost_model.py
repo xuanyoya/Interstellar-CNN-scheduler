@@ -481,10 +481,14 @@ def valid_partitioning(resource, point, layer, verbose=False):
             return False
     return True
 
+def valid_blocking_size_current_level(resource, point, layer, level, verbose=False):
+    return fit_in_level(resource.buffer(level).capacity * resource.paras[level].count, 
+        get_block_size(point, layer, level))
+
+
 def valid_blocking_size(resource, point, layer, verbose=False):
     for level in xrange(resource.buffer_levels()):
-        if not fit_in_level(resource.buffer(level).capacity * resource.paras[level].count, 
-            get_block_size(point, layer, level)):
+        if not valid_blocking_size_current_level(resource, point, layer, level, verbose):
             return False
     return True 
 

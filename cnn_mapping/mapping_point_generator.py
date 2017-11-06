@@ -10,6 +10,7 @@ import itertools
 import copy
 
 from mapping_point import MappingPoint
+from cache import Cache
 import cost_model
 
 import loop_enum as le
@@ -155,6 +156,31 @@ def loop_tile(loop_extent, num_level, loop_hint=None):
 
     return tile_permutations
 
+def opt_valid_blocking(blocking_cache, resource, layer, blocking):
+   num_levels = resource.buffer_levels()
+   blocking_tuple = zip(*blocking)
+   dummy_partitioning = [(1,) * num_levels] * le.NUM  
+   dummy_mapping_point = MappingPoint(None, list(blocking), dummy_partitioning)
+  
+   '''
+   Use cache to compute valid of first level
+   '''
+   level = 0 
+   value_in_cache = blocking_cache.read_cache(level, blocking_tuple[level]) 
+   if value_in_cache == None: 
+       valid = cost_model.valid_blocking_size_current_level(resource, dummy_mapping_point, layer, level)
+       blocking_cache.write_cache(level, blocking_tuple[level], valid)
+   else :
+       valid = value_in_cache
+   if not valid:
+       return False
+ 
+
+   for level in xrange(1, num_levels):
+       if not cost_model.valid_blocking_size_current_level(resource, dummy_mapping_point, layer, level):
+           return False
+   return True 
+    
 def blocking_generator_function(resource, layer, hint=None ,verbose=False):
 
     '''
@@ -171,15 +197,14 @@ def blocking_generator_function(resource, layer, hint=None ,verbose=False):
     '''
     Generate all possible loop tilings for all loops,
     then transform the data organizations to match with loop_blocking_list 
+    Use cache to buffer the valid status of blocking for the first level
     '''
+    blocking_cache = Cache(1, 100)
     for tile in itertools.product(*all_tile_permutations):
         #TODO here the generated is a list of lists, not a list of tuples
-        blocking_list = list(tile)
 
-        dummy_partitioning = [(1,) * num_levels] * le.NUM  
-        dummy_mapping_point = MappingPoint(None, blocking_list, dummy_partitioning)
-        if cost_model.valid_blocking_size(resource, dummy_mapping_point, layer, verbose):
-            yield blocking_list
+        if opt_valid_blocking(blocking_cache, resource, layer, tile):
+            yield list(tile)
 
 '''
 def partition_loops(loops, para, num_level):
@@ -313,6 +338,7 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
     partitioning = point.loop_partitionings
     #dummy_partitioning = [(1,) * num_levels] * le.NUM 
     non_empty_loops = get_non_empty_loops(point, num_levels)
+    print blocking, partitioning
 
     best_cost = 0
     para_level = 0

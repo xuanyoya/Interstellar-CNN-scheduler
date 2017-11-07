@@ -8,6 +8,7 @@ parallelism to be factors of the layer size
 #from __future__ import division
 import itertools
 import copy
+from operator import mul
 
 from mapping_point import MappingPoint
 from cache import Cache
@@ -131,29 +132,68 @@ def recursive_tile(tile_permutations, curr_loop_tile, n, curr_level, num_level):
         recursive_tile(tile_permutations, new_loop_tile, n/i, curr_level+1, num_level)
 
 
-def loop_tile_with_para_hint(tile_permutations, loop_extent, num_level, loop_hint=None):
+def loop_tile_with_para_hint(tile_permutations, loop_extent, num_level, loop_hint):
     para_hint = loop_hint[0][2]
     #TODO use faster way for this checking
     for i in factors(loop_extent):
         if i >= para_hint :
             recursive_tile(tile_permutations, [i], loop_extent/i, 1, num_level)         
   
+def loop_tile_with_hint(tile_permutations, loop_extent, num_level, loop_hint):
+    #TODO support more than 1 level of para hint
+    for level in xrange(num_level):
+        if loop_hint[level] != None:
+            loop_hint_level = level
+            break
+
+    blocking_hint = 1 if loop_hint[loop_hint_level][1] == None else loop_hint[loop_hint_level][1]
+    assert loop_hint[loop_hint_level][2] 
+    para_hint = loop_hint[loop_hint_level][2]
+    #para_hint = 1 if loop_hint[loop_hint_level][2] == None else loop_hint[loop_hint_level][2]
+    blocking_factor = blocking_hint * para_hint
+
+   
+    pre_tile_permutations = [] 
+    if loop_hint_level == 0 :
+        pre_tile_permutations.append([])
+    else : 
+        for sub_extent in factors((loop_extent+blocking_factor-1)//blocking_factor):
+            recursive_tile(pre_tile_permutations, [], sub_extent, 0, loop_hint_level)
  
+    for pre_tile in pre_tile_permutations:
+        #TODO support not fixed blocking hint
+        if loop_hint[loop_hint_level][1]: 
+            pre_tile.append(blocking_factor)
+            blocking_accum = reduce(mul, pre_tile, 1)
+            recursive_tile(tile_permutations, pre_tile, (loop_extent+blocking_accum-1)//blocking_accum, loop_hint_level+1, num_level)
+        else:
+            blocking_accum = reduce(mul, pre_tile, 1)
+            for i in factors((loop_extent+blocking_accum-1)//blocking_accum):
+                if i >= para_hint:
+                    new_pre_tile= copy.copy(pre_tile)
+                    new_pre_tile.append(i)
+                    new_blocking_accum = blocking_accum * i
+                    recursive_tile(tile_permutations, new_pre_tile,
+                        (loop_extent+new_blocking_accum-1)//new_blocking_accum, loop_hint_level+1, num_level)
+                     
+
 def loop_tile(loop_extent, num_level, loop_hint=None):
     
     tile_permutations = []
     if not loop_hint:
         recursive_tile(tile_permutations, [], loop_extent, 0, num_level)   
+    else:
+        loop_tile_with_hint(tile_permutations, loop_extent, num_level, loop_hint)
+    '''
     elif loop_hint[0][1] and loop_hint[0][2]:
         #TODO hint not only at 1st level
-        #TODO not exact divide case
         blocking_factor = loop_hint[0][1] * loop_hint[0][2] 
-        new_loop_extent = loop_extent/(blocking_factor)
+        new_loop_extent = (loop_extent + blocking_factor - 1 )//(blocking_factor)
         recursive_tile(tile_permutations, [blocking_factor], 
                               new_loop_extent, 1, num_level)
     else:
         loop_tile_with_para_hint(tile_permutations, loop_extent, num_level, loop_hint)
-
+    '''
     return tile_permutations
 
 def opt_valid_blocking(blocking_cache, resource, layer, blocking):
@@ -202,7 +242,7 @@ def blocking_generator_function(resource, layer, hint=None ,verbose=False):
     blocking_cache = Cache(1, 100)
     for tile in itertools.product(*all_tile_permutations):
         #TODO here the generated is a list of lists, not a list of tuples
-
+        #if cost_model.valid_blocking_size(resource, dummy_mapping_point, layer):
         if opt_valid_blocking(blocking_cache, resource, layer, tile):
             yield list(tile)
 

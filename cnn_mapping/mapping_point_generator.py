@@ -378,7 +378,7 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
     partitioning = point.loop_partitionings
     #dummy_partitioning = [(1,) * num_levels] * le.NUM 
     non_empty_loops = get_non_empty_loops(point, num_levels)
-    print blocking, partitioning
+    #print blocking, partitioning
 
     best_cost = 0
     para_level = 0

@@ -50,9 +50,10 @@ def get_if_access(level, point, layer, mac_capacity = 1):
     fy_acc = reduce(mul, point.loop_blockings[le.FY][level+fy_exclusive:], 1) 
     oc_acc = reduce(mul, point.loop_blockings[le.OC][level+oc_exclusive:], 1) 
 
-    fx_par = reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
-    fy_par = reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
-    oc_par = reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
+    # No loop orders among unrolled loops, they have the same order 
+    fx_par = reduce(mul, point.loop_partitionings[le.FX][level:], 1) 
+    fy_par = reduce(mul, point.loop_partitionings[le.FY][level:], 1) 
+    oc_par = reduce(mul, point.loop_partitionings[le.OC][level:], 1) 
 
     return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
 
@@ -80,9 +81,9 @@ def get_of_access(level, point, layer, mac_capacity = 1):
     fy_acc = reduce(mul, point.loop_blockings[le.FY][level+fy_exclusive:], 1) 
     ic_acc = reduce(mul, point.loop_blockings[le.IC][level+ic_exclusive:], 1) 
 
-    fx_par = reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
-    fy_par = reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
-    ic_par = reduce(mul, point.loop_partitionings[le.IC][level+ic_exclusive:], 1) 
+    fx_par = reduce(mul, point.loop_partitionings[le.FX][level:], 1) 
+    fy_par = reduce(mul, point.loop_partitionings[le.FY][level:], 1) 
+    ic_par = reduce(mul, point.loop_partitionings[le.IC][level:], 1) 
 
     return fx_acc * fy_acc * ic_acc * fx_par * fy_par * ic_par
    
@@ -110,9 +111,9 @@ def get_fl_access(level, point, layer, mac_capacity = 1):
     oy_acc = reduce(mul, point.loop_blockings[le.OY][level+oy_exclusive:], 1)
     on_acc = reduce(mul, point.loop_blockings[le.ON][level+on_exclusive:], 1) 
 
-    ox_par = reduce(mul, point.loop_partitionings[le.OX][level+ox_exclusive:], 1) 
-    oy_par = reduce(mul, point.loop_partitionings[le.OY][level+oy_exclusive:], 1) 
-    on_par = reduce(mul, point.loop_partitionings[le.ON][level+on_exclusive:], 1) 
+    ox_par = reduce(mul, point.loop_partitionings[le.OX][level:], 1) 
+    oy_par = reduce(mul, point.loop_partitionings[le.OY][level:], 1) 
+    on_par = reduce(mul, point.loop_partitionings[le.ON][level:], 1) 
 
     return ox_acc * oy_acc * on_acc * ox_par * oy_par * on_par
 
@@ -143,9 +144,9 @@ def opt_get_if_access(level, point, ba_arr, pa_arr):
     fy_acc = ba_arr[le.FY][level+fy_exclusive] #reduce(mul, point.loop_blockings[le.FY][level+fy_exclusive:], 1) 
     oc_acc = ba_arr[le.OC][level+oc_exclusive] #reduce(mul, point.loop_blockings[le.OC][level+oc_exclusive:], 1) 
 
-    fx_par = pa_arr[le.FX][level+fx_exclusive] #reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
-    fy_par = pa_arr[le.FY][level+fy_exclusive] #reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
-    oc_par = pa_arr[le.OC][level+oc_exclusive] #reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
+    fx_par = pa_arr[le.FX][level] #reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
+    fy_par = pa_arr[le.FY][level] #reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
+    oc_par = pa_arr[le.OC][level] #reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
 
     return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
 
@@ -171,9 +172,9 @@ def opt_get_of_access(level, point, ba_arr, pa_arr):
     fy_acc = ba_arr[le.FY][level+fy_exclusive] #reduce(mul, point.loop_blockings[le.FY][level+fy_exclusive:], 1) 
     ic_acc = ba_arr[le.IC][level+ic_exclusive] #reduce(mul, point.loop_blockings[le.OC][level+oc_exclusive:], 1) 
 
-    fx_par = pa_arr[le.FX][level+fx_exclusive] #reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
-    fy_par = pa_arr[le.FY][level+fy_exclusive] #reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
-    ic_par = pa_arr[le.IC][level+ic_exclusive] #reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
+    fx_par = pa_arr[le.FX][level] #reduce(mul, point.loop_partitionings[le.FX][level+fx_exclusive:], 1) 
+    fy_par = pa_arr[le.FY][level] #reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
+    ic_par = pa_arr[le.IC][level] #reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
 
 
     return fx_acc * fy_acc * ic_acc * fx_par * fy_par * ic_par
@@ -199,9 +200,9 @@ def opt_get_fl_access(level, point, ba_arr, pa_arr):
     oy_acc = ba_arr[le.OY][level+oy_exclusive] #reduce(mul, point.loop_blockings[le.OY][level+oy_exclusive:], 1)
     on_acc = ba_arr[le.ON][level+on_exclusive] #reduce(mul, point.loop_blockings[le.ON][level+on_exclusive:], 1) 
 
-    ox_par = pa_arr[le.OX][level+ox_exclusive] #reduce(mul, point.loop_partitionings[le.OX][level+ox_exclusive:], 1) 
-    oy_par = pa_arr[le.OY][level+oy_exclusive] #reduce(mul, point.loop_partitionings[le.OY][level+oy_exclusive:], 1) 
-    on_par = pa_arr[le.ON][level+on_exclusive] #reduce(mul, point.loop_partitionings[le.ON][level+on_exclusive:], 1) 
+    ox_par = pa_arr[le.OX][level] #reduce(mul, point.loop_partitionings[le.OX][level+ox_exclusive:], 1) 
+    oy_par = pa_arr[le.OY][level] #reduce(mul, point.loop_partitionings[le.OY][level+oy_exclusive:], 1) 
+    on_par = pa_arr[le.ON][level] #reduce(mul, point.loop_partitionings[le.ON][level+on_exclusive:], 1) 
 
     return ox_acc * oy_acc * on_acc * ox_par * oy_par * on_par
 
@@ -314,9 +315,6 @@ def get_access(point, layer, resource):
     
     Support more access modes in parallelism case
     '''
-    #TODO support unroll in outer loop, (not just at 1st level)
-    #     will affect access in paritioned units, seems not effect on
-    #     access at lower level
     #TODO support more customized memory
     #TODO more access at overlapped boundary
    
@@ -331,10 +329,11 @@ def get_access(point, layer, resource):
         fl_block_access = get_fl_access(level, point, layer, mac_capacity)
         access_list.append([if_block_access, of_block_access, fl_block_access])
 
-    para_mode = [e.access_mode for i, e in enumerate(resource.paras) if e.access_mode != 0]
-    if para_mode:
+    #para_mode = [e.access_mode for i, e in enumerate(resource.paras) if e.access_mode != 0]
+    para_mode_level = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
+    if para_mode_level:
         # access at array level 
-        para_mode_level = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
+        #para_mode_level = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
         delta = 0
         for level in para_mode_level:
             if level + delta + 1 >= num_levels :
@@ -562,6 +561,22 @@ def get_level_cost(resource, point, layer, level, verbose=False):
         print "Level ", level, " access: ", level_access 
     return level_cost
 
+def get_level_costs(resource, point, layer, verbose=False):
+    num_levels = resource.buffer_levels()
+    
+    level_energy = []
+    for level in xrange(num_levels):
+        level_energy.append(get_level_cost(resource, point, layer, level))
+  
+    para_index = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
+
+    delta = 1
+    for index in para_index:
+        array_energy = get_array_and_curr_level_cost(resource, point, layer, index+1) - level_energy[index+delta]
+        level_energy.insert(index+delta, array_energy)
+        delta += 1
+
+    return level_energy      
 
 def get_block_cost(resource, point, layer, verbose=False):
     '''

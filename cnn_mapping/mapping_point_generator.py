@@ -348,7 +348,6 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
         for curr_level_order in level_order_generator_function(point, le.NUM, non_empty_loops, level):
             dummy_loop_order = [[0] * le.NUM] * num_levels 
             dummy_loop_order[level] = curr_level_order
-            #print zip(*dummy_loop_order)
             mapping_point = MappingPoint(zip(*dummy_loop_order), blocking, partitioning)        
             if level <= 0 or resource.paras[level-1].count <= 1 \
                 or resource.paras[level-1].access_mode < 1:

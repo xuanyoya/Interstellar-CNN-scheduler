@@ -325,7 +325,7 @@ def get_access(point, layer, resource):
     access_list = []
     for level in xrange(num_levels):
         if_block_access = get_if_access(level, point, layer, mac_capacity)
-        of_block_access = 2 * get_of_access(level, point, layer, mac_capacity) - 1
+        of_block_access = 2 * get_of_access(level, point, layer, mac_capacity) - 1 
         fl_block_access = get_fl_access(level, point, layer, mac_capacity)
         access_list.append([if_block_access, of_block_access, fl_block_access])
 
@@ -339,7 +339,8 @@ def get_access(point, layer, resource):
             if level + delta + 1 >= num_levels :
                 next_level_access = [1, 1, 1]
             else:
-                next_level_access = access_list[level + delta + 1]
+                next_level_access = copy.copy(access_list[level + delta + 1])
+                next_level_access[1] = (next_level_access[1] + 1)/2 
             array_access = get_array_access(level, next_level_access, point) 
             access_list.insert(level + delta + 1, array_access)
             delta += 1
@@ -540,12 +541,12 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
     buffer_access = map(mul, level_access, layer_size)
     level_cost = sum(buffer_access) * resource.access_cost[level]
 
-    level_access[1] = of_access 
-    level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access)
-
     if verbose >= 2:
         print "Level ", level, " access: ", level_access 
  
+    level_access[1] = of_access 
+    level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access, verbose)
+
     return level_cost
     
 def get_level_cost(resource, point, layer, level, verbose=False):

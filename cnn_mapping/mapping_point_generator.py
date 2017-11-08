@@ -246,45 +246,6 @@ def blocking_generator_function(resource, layer, hint=None ,verbose=False):
         if opt_valid_blocking(blocking_cache, resource, layer, tile):
             yield list(tile)
 
-'''
-def partition_loops(loops, para, num_level):
-   partitioned_loop = []
-   partitioned_para = []
-
-   para_factors = list(factors(para.count))     
-   for f in para_factors[1:]: #excluding 1
-       for i in xrange(len(loops)):
-           if f <= loops[i] : 
-               p = [1] * le.NUM
-               p[i] = f
-               l = list(loops)
-               l[i] = (loops[i] + f - 1) // f #ceiling division
-               partitioned_loop.append(l)      
-               partitioned_para.append(p)      
-        
-   return [partitioned_loop, partitioned_para]
-
-
-def partition_blocking(lp, resource):
-    num_level = resource.buffer_levels()
-
-    
-    partitioned_loops = []
-    partitioned_paras = []
-
-    para_index = [i for i, e in enumerate(resource.paras) if e.count != 1]    
-    for index in para_index:
-        para = resource.paras[index]
-        partitioned_loop, partitioned_para = partition_loops(lp[index], para, num_level)
-        partitioned_loops.append(partitioned_loop)
-        partitioned_paras.append(partitioned_para)
-    
-    iter_partition_loops = list(itertools.product(*partitioned_loops))
-    iter_partition_paras = list(itertools.product(*partitioned_paras))     
-    #print iter_partition_loops
-    #print iter_partition_paras
-    return [iter_partition_loops, iter_partition_paras]
-'''
 
 def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_loop, cur_factor, para_count):
     if cur_loop == le.NUM -1 :

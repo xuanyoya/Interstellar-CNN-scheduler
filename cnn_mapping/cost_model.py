@@ -325,7 +325,7 @@ def get_access(point, layer, resource):
     access_list = []
     for level in xrange(num_levels):
         if_block_access = get_if_access(level, point, layer, mac_capacity)
-        of_block_access = 2 * get_of_access(level, point, layer, mac_capacity)
+        of_block_access = 2 * get_of_access(level, point, layer, mac_capacity) - 1
         fl_block_access = get_fl_access(level, point, layer, mac_capacity)
         access_list.append([if_block_access, of_block_access, fl_block_access])
 
@@ -393,7 +393,7 @@ def opt_get_access(num_levels, point, mac_capacity):
     access_arr = np.zeros((num_levels, 3))
     for level in xrange(num_levels):
         access_arr[level][0] = opt_get_if_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
-        access_arr[level][1] = 2 * opt_get_of_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
+        access_arr[level][1] = 2 * opt_get_of_access(level, point, blocking_accum_arr, partitioning_accum_arr) - 1 
         access_arr[level][2] = opt_get_fl_access(level, point, blocking_accum_arr, partitioning_accum_arr) 
     
     return access_arr
@@ -532,13 +532,15 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
     layer_size = get_layer_size(layer)
     mac_capacity = resource.mac_capacity
 
+    of_access = get_of_access(level, point, layer, mac_capacity) 
     level_access = [get_if_access(level, point, layer, mac_capacity), \
-                    2 * get_of_access(level, point, layer, mac_capacity), \
+                    2 * of_access - 1, \
                     get_fl_access(level, point, layer, mac_capacity)] 
 
     buffer_access = map(mul, level_access, layer_size)
     level_cost = sum(buffer_access) * resource.access_cost[level]
 
+    level_access[1] = of_access 
     level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access)
 
     if verbose >= 2:
@@ -551,7 +553,7 @@ def get_level_cost(resource, point, layer, level, verbose=False):
     mac_capacity = resource.mac_capacity
 
     level_access = [get_if_access(level, point, layer, mac_capacity), \
-                    2 * get_of_access(level, point, layer, mac_capacity), \
+                    2 * get_of_access(level, point, layer, mac_capacity) - 1, \
                     get_fl_access(level, point, layer, mac_capacity)] 
 
     buffer_access = map(mul, level_access, layer_size)

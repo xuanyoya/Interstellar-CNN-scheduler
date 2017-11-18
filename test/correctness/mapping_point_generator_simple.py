@@ -6,7 +6,7 @@ import cnn_mapping as cm
 
 class TestCostModel(unittest.TestCase):
 
-            
+               
     def test_simple(self):
         order_generator = cm.mapping_point_generator.order_generator_function(3, 2)
         self.assertEqual(next(order_generator), [(0,0), (1,1), (2,2)])
@@ -211,14 +211,14 @@ class TestCostModel(unittest.TestCase):
         layer = cm.Layer(32, 32, 16, 16, 3, 3, 4)
         loop_blocking = [(3, 1, 1), (3, 1, 1), (1, 16, 1), (4, 4, 1), (8, 2, 2), (2, 4, 8), (4, 1, 1)]
 
-        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource) 
+        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, layer) 
         self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 2, 2, 3], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 3, 1, 4], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 3, 2, 2], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
 
-        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, schedule_hint) 
+        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, layer, schedule_hint) 
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 4, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
-
+    
     def test_parallel_blocking_partial_hint(self):
         capacity_list = [512, 131072, 2097152]
         access_cost_list = [1, 6, 64]
@@ -233,13 +233,13 @@ class TestCostModel(unittest.TestCase):
         layer = cm.Layer(32, 32, 16, 16, 3, 3, 4)
         loop_blocking = [(3, 1, 1), (3, 1, 1), (1, 16, 1), (4, 4, 1), (8, 2, 2), (2, 4, 8), (4, 1, 1)]
 
-        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, schedule_hint) 
+        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, layer, schedule_hint) 
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 4, 1, 1, 4], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 4, 1, 2, 2], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 4, 2, 1, 2], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 4, 2, 2, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 4, 4, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
-
+    
     def test_parallel_blocking_partial_hint1(self):
         capacity_list = [512, 131072, 2097152]
         access_cost_list = [1, 6, 64]
@@ -254,7 +254,7 @@ class TestCostModel(unittest.TestCase):
         layer = cm.Layer(32, 32, 16, 16, 3, 3, 4)
         loop_blocking = [(3, 1, 1), (3, 1, 1), (1, 16, 1), (4, 4, 1), (8, 2, 2), (2, 4, 8), (4, 1, 1)]
 
-        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, schedule_hint) 
+        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, layer, schedule_hint) 
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 1, 4, 1, 4], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 1, 4, 2, 2], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 3, 1, 1, 8, 1, 2], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
@@ -274,10 +274,30 @@ class TestCostModel(unittest.TestCase):
         layer = cm.Layer(32, 32, 16, 16, 3, 3, 4)
         loop_blocking = [(3, 1, 1), (3, 1, 1), (1, 16, 1), (4, 4, 1), (2, 8, 2), (2, 4, 8), (1, 4, 1)]
 
-        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, schedule_hint) 
+        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, layer, schedule_hint) 
         self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 4, 4, 4], [1, 1, 1, 1, 1, 1, 1]))
         self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 8, 4, 2], [1, 1, 1, 1, 1, 1, 1]))      
         
+
+    def test_parallel_blocking_partial_hint3(self):
+        capacity_list = [512, 131072, 2097152]
+        access_cost_list = [1, 6, 64]
+        static_cost_list = [0.2, 32*0.2, 4096*0.2]
+        para_count_list = [1, 64, 1]
+
+        # {loop: [level, order, blocking, partitioning]}
+        schedule_hint = {cm.le.OX: [None, [1, None, 4], None], cm.le.OC: [None, [2, None, 4], None]}
+
+        resource = cm.Resource(capacity_list, access_cost_list, static_cost_list, para_count_list, 0, [0, 1, 0], [2], [cm.le.OC, cm.le.IC, cm.le.ON])
+        layer = cm.Layer(32, 32, 16, 16, 3, 3, 4, 4, 4)
+        loop_blocking = [(3, 1, 1), (3, 1, 1), (1, 16, 1), (4, 4, 1), (2, 8, 2), (2, 4, 8), (1, 4, 1)]
+
+        parallel_generator = cm.mapping_point_generator.parallel_blocking_generator_function(zip(*loop_blocking), resource, layer, schedule_hint) 
+        self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 1, 1, 1], [1, 1, 4, 1, 4, 1, 2], [1, 1, 1, 1, 1, 1, 1]))
+        self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 1, 1, 1], [1, 1, 4, 1, 4, 2, 1], [1, 1, 1, 1, 1, 1, 1]))
+        self.assertEqual(next(parallel_generator), ([1, 1, 1, 1, 1, 1, 1], [1, 1, 4, 1, 8, 1, 1], [1, 1, 1, 1, 1, 1, 1]))
+ 
+
     '''
     def test_blocking_generator(self):
         capacity_list = [512, 262144] 

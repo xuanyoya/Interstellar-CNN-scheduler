@@ -35,7 +35,7 @@ def get_if_access(level, point, layer, mac_capacity = 1):
     '''
     
     if level == 0 and mac_capacity == 0:
-        return layer.wfil * layer.hfil * layer.nofm
+        return layer.wfil * layer.hfil * layer.nofm / (layer.wstd * layer.hstd)
     
     ex_order_index = min(point.loop_orders[le.OX][level], 
         point.loop_orders[le.OY][level], 
@@ -55,7 +55,7 @@ def get_if_access(level, point, layer, mac_capacity = 1):
     fy_par = reduce(mul, point.loop_partitionings[le.FY][level:], 1) 
     oc_par = reduce(mul, point.loop_partitionings[le.OC][level:], 1) 
 
-    return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
+    return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par / (layer.wstd * layer.hstd)
 
 
 def get_of_access(level, point, layer, mac_capacity = 1):
@@ -148,7 +148,7 @@ def opt_get_if_access(level, point, ba_arr, pa_arr):
     fy_par = pa_arr[le.FY][level] #reduce(mul, point.loop_partitionings[le.FY][level+fy_exclusive:], 1) 
     oc_par = pa_arr[le.OC][level] #reduce(mul, point.loop_partitionings[le.OC][level+oc_exclusive:], 1) 
 
-    return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par
+    return fx_acc * fy_acc * oc_acc * fx_par * fy_par * oc_par 
 
 
 def opt_get_of_access(level, point, ba_arr, pa_arr):

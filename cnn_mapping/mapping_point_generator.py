@@ -18,13 +18,19 @@ import loop_enum as le
 import buffer_enum as be
 import utils
 
-def get_hinted_para(level, hint):
+def get_hinted_para(layer, level, hint):
     assert hint    
 
     hinted_para = 1
     for loop in xrange(le.NUM):
         if loop in hint:
-            hinted_para *= hint[loop][level][2]
+            if loop == le.OX:
+                hinted_loop_para = hint[loop][level][2] + layer.wstd - 1
+            elif loop == le.OY:
+                hinted_loop_para = hint[loop][level][2] + layer.hstd - 1
+            else:
+                hinted_loop_para = hint[loop][level][2]
+            hinted_para *= hinted_loop_para
 
     return hinted_para
 
@@ -278,7 +284,13 @@ def current_level_recursive_partition_blocking_with_hint(para_permutation, slb, 
             slp.append(cur_factor)
             para_permutation.append(slp)
         return
-    elif cur_loop in para_loops:
+
+    
+    cur_loop_in_para_loops = False
+    if para_loops != None:
+        cur_loop_in_para_loops = cur_loop in para_loops
+
+    if cur_loop_in_para_loops :
         for f in list(factors(cur_factor)) :
             if f*p <= slb[cur_loop]:
                 new_slp = copy.copy(slp)
@@ -292,7 +304,7 @@ def current_level_recursive_partition_blocking_with_hint(para_permutation, slb, 
             cur_loop+1, cur_factor, para_count, hint, level, para_loops)    
 
 
-def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_loop, cur_factor, para_count):
+def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_loop, cur_factor, para_count, layer):
     if cur_loop == le.NUM -1 :
         if cur_factor <= slb[le.NUM-1] : 
             slp.append(cur_factor)
@@ -303,10 +315,16 @@ def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_l
             if f <= slb[cur_loop] :
                 new_slp = copy.copy(slp)
                 new_slp.append(f) #TODO not exact divide case 
-                current_level_recursive_partition_blocking(para_permutation, slb, new_slp, cur_loop+1, cur_factor/f, para_count)    
+                if cur_loop == le.OX:
+                    real_f = f + layer.wstd - 1
+                elif cur_loop == le.OY:
+                    real_f = f + layer.hstd - 1
+                else:
+                    real_f = f
+                current_level_recursive_partition_blocking(para_permutation, slb, new_slp, cur_loop+1, cur_factor/real_f, para_count, layer)    
 
 
-def parallel_blocking_generator_function(lp, resource, hint=None):
+def parallel_blocking_generator_function(lp, resource, layer, hint=None):
     num_level = resource.buffer_levels()
 
     para_permutations = []
@@ -317,17 +335,17 @@ def parallel_blocking_generator_function(lp, resource, hint=None):
             para = resource.paras[level]
             para_permutation = []
             if hint == None: 
-                current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count) 
+                current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count, layer) 
                 para_permutations.append(para_permutation)
             else:
-                hinted_para = get_hinted_para(level, hint)
+                hinted_para = get_hinted_para(layer, level, hint)
                 if  para.count >= hinted_para * 2 :
                     new_para_count = para.count/hinted_para
                     current_level_recursive_partition_blocking_with_hint(para_permutation, lp[level], [], 0, new_para_count, new_para_count, hint, level, resource.partition_loops) 
                     para_permutations.append(para_permutation)
                 else :
                     para_permutations.append(get_hinted_partitioning(level, hint)) 
-    
+
     for partition in itertools.product(*para_permutations) :
         yield partition
 
@@ -342,7 +360,7 @@ def blocking_partitioning_generator_function_with_hint(resource, layer, hint, ve
         #print "loop_blocking: ", loop_blocking
         
         loop_blocking_reshape = zip(*loop_blocking)
-        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, hint)
+        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, hint)
         
         for partition in pb_generator:
             partitioned_loop_blocking_reshape = []
@@ -386,7 +404,7 @@ def blocking_partitioning_generator_function(resource, layer, verbose=False):
         #print "loop_blocking: ", loop_blocking
         
         loop_blocking_reshape = zip(*loop_blocking)
-        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, None)
+        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, None)
         
         for partition in pb_generator:
             partitioned_loop_blocking_reshape = []

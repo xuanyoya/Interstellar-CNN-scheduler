@@ -12,6 +12,7 @@ def opt_optimizer(resource, layer, hint=None, verbose=False):
     Evaluate the cost of each mapping point,
     record the mapping_point with the smallest cost
     '''
+
     smallest_cost, best_mapping_point = mapping_point_generator.opt_mapping_point_generator_function(resource, layer, hint, verbose)
     total_cost = cost_model.get_cost(resource, best_mapping_point, layer, verbose)
   

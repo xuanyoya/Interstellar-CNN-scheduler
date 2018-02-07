@@ -53,8 +53,8 @@ class Resource(object):
     def __init__(self, buf_capacity_list, buf_access_cost_list,
                  buf_unit_static_cost_list, para_count_list, 
                  mac_capacity=1, partition_mode=None, array_access_cost=None, partition_loops=None):
-        # Buffers.
 
+        # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
         assert len(buf_capacity_list) == len(buf_unit_static_cost_list)
         

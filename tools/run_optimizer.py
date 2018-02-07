@@ -36,6 +36,7 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
         for y in xrange(explore_points[1]):
             arch_info["capacity"][1] = capacity1 * (arch_info["capacity_scale"][1]**y)
             arch_info["access_cost"][1] = cost1 * (arch_info["access_cost_scale"][1]**y)
+            print arch_info
             energy = basic_optimizer(arch_info, network_info, schedule_info, False, verbose)
             energy_list[x][y] = energy
 
@@ -44,11 +45,11 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("type", choices=["basic", "mem_explore", "2level_reg_explore"], help="optimizer type")
+    parser.add_argument("type", choices=["basic", "mem_explore"], help="optimizer type")
     parser.add_argument("arch", help="architecture specification")
     parser.add_argument("network", help="network specification")
     parser.add_argument("-s", "--schedule", help="restriction of the schedule space")
-    parser.add_argument("-v", "--verbose", type=int, help="vebosity")
+    parser.add_argument("-v", "--verbose", action='count', help="vebosity")
     args = parser.parse_args()
 
     arch_info, network_info, schedule_info = cm.extract_input.extract_info(args)    

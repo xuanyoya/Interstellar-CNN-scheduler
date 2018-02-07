@@ -116,7 +116,7 @@ def opt_order_generator_function(point, num_loops, num_levels):
         yield zip(*loop_order)
     
 def level_order_generator_function(point, num_loops, non_empty_loops, level):
- 
+
     for order in itertools.permutations(range(len(non_empty_loops[level]))):
         yield get_loop_order(order, non_empty_loops, level)
    
@@ -375,24 +375,7 @@ def blocking_partitioning_generator_function_with_hint(resource, layer, hint, ve
             #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
                 yield [blocking_list, partitioning_list]
  
-    '''
-    partitioning_list = get_fixed_partitioning(num_level, hint) 
-    for loop_blocking in blocking_generator: 
-       #print "loop_blocking: ", loop_blocking
 
-       loop_blocking_reshape = zip(*loop_blocking)
-       loop_partitioning_reshape = zip(*partitioning_list)
-       partitioned_loop_blocking_reshape = []
-       for level in xrange(num_level):
-           partitioned_loop_blocking_reshape.append([ (x+y-1) // y 
-               for x, y in zip(loop_blocking_reshape[level], loop_partitioning_reshape[level])])   #TODO check if using two maps with floordiv is faster 
-       blocking_list = zip(*partitioned_loop_blocking_reshape)
-       dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list)
-       if cost_model.valid_partitioning(resource, dummy_mapping_point, layer, verbose):
-       #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
-           yield [blocking_list, partitioning_list]
-    '''    
- 
 def blocking_partitioning_generator_function(resource, layer, verbose=False):
     
     #loop_blocking_list and loop_partitioning_list generator.

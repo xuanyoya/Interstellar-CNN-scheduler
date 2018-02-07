@@ -467,7 +467,7 @@ def valid_mapping_point_current_level(resource, point, layer, level, verbose=Fal
 
     partitioning = zip(*(point.loop_partitionings)) 
     valid_para = valid_partition_number(resource, partitioning, level)    
-    
+
     if verbose == 3:
         print "Level ", level, ": Partitioned block size fit in bank: ", valid_size
         print "Level ", level, ": Partition number is valid: ", valid_para

@@ -6,11 +6,14 @@ usage: run_optimizer.py [-h] [-s SCHEDULE] [-v]
 
 positional arguments:
   {basic,mem_explore}   optimizer type
+
   arch                  architecture specification
+
   network               network specification
 
 optional arguments:
   -h, --help            show this help message and exit
-  -s SCHEDULE, --schedule SCHEDULE
-                        restriction of the schedule space
+
+  -s SCHEDULE, --schedule SCHEDULE restriction of the schedule space
+
   -v, --verbose         vebosity

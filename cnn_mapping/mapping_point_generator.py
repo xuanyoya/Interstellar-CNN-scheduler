@@ -578,7 +578,7 @@ def dataflow_exploration(resource, layer, verbose=False):
             print "Find best order for schedule: ", blocking_partitioning
         [blocking, partitioning] = blocking_partitioning
         dummy_mapping_point = MappingPoint(None, blocking, partitioning)
-        print "partitioning: ", partitioning
+        #print "partitioning: ", partitioning
         unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels)
         utilization = get_utilization(utilized, resource)
         cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)

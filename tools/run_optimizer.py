@@ -50,7 +50,8 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
     dataflow_generator = dataflow_generator_function(arch_info)
 
     for dataflow in dataflow_generator:
-        energy = basic_optimizer(arch_info, network_info, schedule_info, False, verbose)            dataflow_res.append[energy]
+        energy = basic_optimizer(arch_info, network_info, schedule_info, False, verbose)            
+        dataflow_res.append[energy]
         
     if verbose:
         print "optimal energy for all dataflows: ", dataflow_res
@@ -86,6 +87,6 @@ if __name__ == "__main__":
     elif args.type == "mem_explore":
         mem_explore_optimizer(arch_info, network_info, schedule_info, args.verbose)
     elif args.type == "dataflow_explore":
-        dataflow_explore_optimizer(arch_info, network_info, args,verbose)
+        dataflow_explore_optimizer(arch_info, network_info, args.verbose)
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
+import math
 import cnn_mapping as cm
-
 
 def basic_optimizer(arch_info, network_info, schedule_info, basic=False, verbose=False):    
 
@@ -43,9 +43,37 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
     print list(energy_list)
 
 
+def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False):
+    
+    dataflow_res = []
+    #TODO check the case when parallel count larger than layer dimension size
+    dataflow_generator = dataflow_generator_function(arch_info)
+
+    for dataflow in dataflow_generator:
+        energy = basic_optimizer(arch_info, network_info, schedule_info, False, verbose)            dataflow_res.append[energy]
+        
+    if verbose:
+        print "optimal energy for all dataflows: ", dataflow_res
+
+    return dataflow_res
+
+
+def dataflow_explore_optimizer(arch_info, network_info, verbose=False):
+
+    assert arch_info["parallel_count"] > 1, \
+        "parallel count has to be more than 1 for dataflow exploration"
+
+    resource = cm.Resource.arch(arch_info) 
+    layer = cm.Layer.layer(network_info)
+    dataflow_tb = cm.mapping_point_generator.dataflow_exploration(resource, layer, verbose)
+    
+    if verbose:
+        print "dataflow table: ", dataflow_tb
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("type", choices=["basic", "mem_explore"], help="optimizer type")
+    parser.add_argument("type", choices=["basic", "mem_explore", "dataflow_explore"], help="optimizer type")
     parser.add_argument("arch", help="architecture specification")
     parser.add_argument("network", help="network specification")
     parser.add_argument("-s", "--schedule", help="restriction of the schedule space")
@@ -57,5 +85,7 @@ if __name__ == "__main__":
         basic_optimizer(arch_info, network_info, schedule_info, True, args.verbose)
     elif args.type == "mem_explore":
         mem_explore_optimizer(arch_info, network_info, schedule_info, args.verbose)
+    elif args.type == "dataflow_explore":
+        dataflow_explore_optimizer(arch_info, network_info, args,verbose)
 
 

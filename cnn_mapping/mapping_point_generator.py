@@ -304,10 +304,14 @@ def current_level_recursive_partition_blocking_with_hint(para_permutation, slb, 
             cur_loop+1, cur_factor, para_count, hint, level, para_loops)    
 
 
-def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_loop, cur_factor, para_count, layer):
+def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_loop, cur_factor, para_count, layer, under_utilized=False):
     if cur_loop == le.NUM -1 :
         if cur_factor <= slb[le.NUM-1] : 
             slp.append(cur_factor)
+            para_permutation.append(slp)
+        elif cur_factor <= 2*slb[le.NUM-1] and under_utilized:
+            '''require to use at least half of the PEs'''
+            slp.append(slb[le.NUM-1])
             para_permutation.append(slp)
         return
     else :
@@ -321,10 +325,10 @@ def current_level_recursive_partition_blocking(para_permutation, slb, slp, cur_l
                     real_f = f + layer.hstd - 1
                 else:
                     real_f = f
-                current_level_recursive_partition_blocking(para_permutation, slb, new_slp, cur_loop+1, cur_factor/real_f, para_count, layer)    
+                current_level_recursive_partition_blocking(para_permutation, slb, new_slp, cur_loop+1, cur_factor/real_f, para_count, layer, under_utilized)    
 
 
-def parallel_blocking_generator_function(lp, resource, layer, hint=None):
+def parallel_blocking_generator_function(lp, resource, layer, hint=None, under_utilized=False):
     num_level = resource.buffer_levels()
 
     para_permutations = []
@@ -335,7 +339,7 @@ def parallel_blocking_generator_function(lp, resource, layer, hint=None):
             para = resource.paras[level]
             para_permutation = []
             if hint == None: 
-                current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count, layer) 
+                current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count, layer, under_utilized) 
                 para_permutations.append(para_permutation)
             else:
                 hinted_para = get_hinted_para(layer, level, hint)
@@ -449,7 +453,7 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
     '''
 
     num_levels = resource.buffer_levels()
-
+    #TODO merge the two cases
     if not hint:
         blocking_partitioning_generator = \
             blocking_partitioning_generator_function(resource, layer)
@@ -518,4 +522,74 @@ def mapping_point_generator_function(resource, layer, hint=None, verbose=False):
                                 blocking, \
                                 partitioning)
                 yield mapping_point
+
+def partitioned_loop_string(partitioning, parallel_levels):
+    #TODO check for multi-level parallel case
+    res = ""
+   
+    utilized = 1
+    partitioning_reshape = zip(*partitioning)
+    for level in parallel_levels:
+        for i, e in enumerate(partitioning_reshape[level]):
+            if e != 1:
+                res += str(i)
+                utilized *= e
+    return [res, utilized]
+
+
+def get_utilization(utilized, resource):
+    #utilized = 1
+    #for i in xrange(len(partitioning)):
+    #    utilized *= reduce(mul, partitioning[i], 1)
+
+    total = resource.total_parallelism() 
+
+    return utilized*1.0/total
+    
+
+def dataflow_exploration(resource, layer, verbose=False):
+    '''
+    Dataflow exploration.
+
+    Generates a table, with unrolled loops being keys, the best energy (and utilization)
+    being the values.
+    '''
+
+    dataflow_tb = {}
+    num_levels = resource.buffer_levels()
+    parallel_levels = [i for i, e in enumerate(resource.paras) if e != 1]
+ 
+    blocking_partitioning_generator = \
+        blocking_partitioning_generator_function(resource, layer)
+
+    #dummy_partitioning = [(1,) * num_levels] * le.NUM  
+
+    smallest_cost = float("inf")
+    #best_mapping_point = None 
+    for blocking_partitioning in blocking_partitioning_generator:
+        ''' 
+           dummy_mapping_point is used to validate the current blocking_partitioning,
+           and abandon the ones that exceed the buffer size at any level.
+           Since this validation does not depend on loop_orders, we perform the validation
+           at this early stage, so that we can avoid generating all the loop orders for 
+           an invalid blocking_partitioning 
+        '''
+        if verbose >= 2:
+            print "Find best order for schedule: ", blocking_partitioning
+        [blocking, partitioning] = blocking_partitioning
+        dummy_mapping_point = MappingPoint(None, blocking, partitioning)
+        print "partitioning: ", partitioning
+        unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels)
+        utilization = get_utilization(utilized, resource)
+        cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)
+        if unrolled_loops not in dataflow_tb or dataflow_tb[unrolled_loops][0] > cost:
+            dataflow_tb[unrolled_loops] = (cost, utilization) #TODO utilization
+            best_mapping_point = MappingPoint(loop_order, blocking, partitioning)
+            if verbose:
+                print "unrolled loops: ", unrolled_loops, " with utilization ", utilization
+                #print "best loop order: ", best_mapping_point.loop_orders
+                print "Update smallest cost: ", dataflow_tb[unrolled_loops][0]
+                #print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
+    #assert best_mapping_point, "No valid mapping point found."
+    return dataflow_tb 
             

@@ -3,6 +3,7 @@ Hardware resource types.
 '''
 #import numpy as np
 from collections import namedtuple
+from operator import mul
 
 class Buffer(namedtuple('Buffer',
                         ['capacity', 'access_cost', 'unit_static_cost'])):
@@ -82,6 +83,7 @@ class Resource(object):
         self.mac_capacity = mac_capacity
         self.array_access_cost = array_access_cost
         self.partition_loops = partition_loops
+        self.para_count_list = para_count_list
 
     @classmethod
     def arch(cls, info):
@@ -107,3 +109,9 @@ class Resource(object):
         Return the specification of the parallelism of the given level.
         '''
         return self.paras[level]
+
+    def total_parallelism(self):
+        '''
+        Return the specification of the total parallelism.
+        '''
+        return reduce(mul, self.para_count_list, 1)

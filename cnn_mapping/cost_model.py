@@ -283,14 +283,14 @@ def get_fl_bank_size(blocking_accum_list):
     blocking_accum_list[le.IC] * blocking_accum_list[le.OC] 
 
 
-def get_array_access(level, access_list, point):
+def get_array_access(partitions, access_list, point):
     '''
     Get the access at array level from the access at the 
     lower level of memory hierachy
     '''
 
     [if_block_access, of_block_access, fl_block_access] = access_list
-    partitions = zip(*point.loop_partitionings)[level]
+    #partitions = zip(*point.loop_partitionings)[level]
 
     array_if_block_access = if_block_access  * partitions[le.FX] * \
                             partitions[le.FY] * partitions[le.OC]
@@ -331,6 +331,7 @@ def get_access(point, layer, resource):
 
     #para_mode = [e.access_mode for i, e in enumerate(resource.paras) if e.access_mode != 0]
     para_mode_level = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
+    partitions = zip(*point.loop_partitionings)
     if para_mode_level:
         # access at array level 
         #para_mode_level = [i for i, e in enumerate(resource.paras) if e.access_mode != 0]
@@ -341,7 +342,11 @@ def get_access(point, layer, resource):
             else:
                 next_level_access = copy.copy(access_list[level + delta + 1])
                 next_level_access[1] = (next_level_access[1] + 1)/2 
-            array_access = get_array_access(level, next_level_access, point) 
+            if resource.paras[level].array_dim == 2:
+                array_access = get_array_access(partitions[level], next_level_access, point) 
+            else :
+                array_access, buffer_access = get_array_and_curr_level_access_1d(resource, point, level+1, next_level_access, False)
+                access_list[level+delta+1] = buffer_access
             access_list.insert(level + delta + 1, array_access)
             delta += 1
  
@@ -519,7 +524,10 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
     #TODO add support for other access_mode
    
     assert resource.paras[level].count and resource.paras[level].access_mode
-    level_access = get_array_access(level, next_level_access, point) 
+
+    #TODO consider move this to parent func
+    partitions = zip(*point.loop_partitionings)[level]
+    level_access = get_array_access(partitions, next_level_access, point) 
 
     buffer_access = map(mul, level_access, layer_size)
     level_cost = sum(buffer_access) * resource.paras[level].array_access_cost
@@ -529,6 +537,77 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
  
     return level_cost
 
+
+def get_array_and_curr_level_access_1d(resource, point, level, next_level_access, verbose=False):
+
+    partitions = zip(*point.loop_partitionings)[level-1]
+    orders = zip(*point.loop_orders)[level-1]
+    buffer_partitions = list(partitions)
+    array_partitions = [1,]*le.NUM
+
+    smallest_para_order = le.NUM-1
+    for i in xrange(len(orders)):
+        if partitions[i] != 1 and orders[i] < smallest_para_order:
+            smallest_para_index = i
+            smallest_para_order = orders[i]             
+
+    buffer_partitions[smallest_para_index] = 1
+    array_partitions[smallest_para_index] = partitions[smallest_para_index]
+
+    if verbose == 3:
+        print "buffer level access factor due to parallism: ", buffer_partitions
+        print "array level access factor due to parallism: ", array_partitions
+
+    buffer_level_access = get_array_access(buffer_partitions, next_level_access, point) 
+    array_level_access = get_array_access(array_partitions, next_level_access, point) 
+
+    buffer_level_access[1] = buffer_level_access[1]*2-1
+
+    return [array_level_access, buffer_level_access] 
+
+def get_array_and_curr_level_cost_1d(resource, point, layer_size, level, next_level_access, verbose=False):
+    #TODO add support for other access_mode
+   
+    assert resource.paras[level-1].count and resource.paras[level-1].access_mode
+
+    #TODO consider move this to parent func
+    array_level_access, buffer_level_access = \
+        get_array_and_curr_level_access_1d(resource, point, level, next_level_access, verbose)
+       
+    total_buffer_access = map(mul, buffer_level_access, layer_size)
+    level_cost = sum(total_buffer_access) * resource.access_cost[level]
+
+    total_array_access = map(mul, array_level_access, layer_size)
+    level_cost += sum(total_array_access) * resource.paras[level-1].array_access_cost
+
+    return level_cost
+
+
+def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
+    layer_size = get_layer_size(layer)
+    mac_capacity = resource.mac_capacity
+   
+    level_access = [get_if_access(level, point, layer, mac_capacity), \
+                    get_of_access(level, point, layer, mac_capacity), \
+                    get_fl_access(level, point, layer, mac_capacity)] 
+
+    [if_access, of_access, fl_access] = level_access 
+    twoD_flag = int(resource.paras[level-1].array_dim == 2)
+    if twoD_flag:
+        buffer_level_access = [if_access, 2*of_access-1, fl_access]
+        total_buffer_access = map(mul, buffer_level_access, layer_size)
+        level_cost = sum(total_buffer_access) * resource.access_cost[level]
+
+        if verbose >= 2:
+            print "Level ", level, " access: ", level_access 
+ 
+        level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access, verbose)
+    else: 
+        level_cost = get_array_and_curr_level_cost_1d(resource, point, layer_size, level, level_access, verbose)
+
+    return level_cost
+
+'''
 def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
     layer_size = get_layer_size(layer)
     mac_capacity = resource.mac_capacity
@@ -548,6 +627,7 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
     level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access, verbose)
 
     return level_cost
+'''
     
 def get_level_cost(resource, point, layer, level, verbose=False):
     layer_size = get_layer_size(layer)

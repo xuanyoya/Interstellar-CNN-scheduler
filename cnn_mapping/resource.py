@@ -22,7 +22,7 @@ class Buffer(namedtuple('Buffer',
     pass
 
 class Parallelism(namedtuple('Parallelism',
-                             ['count', 'access_mode', 'array_access_cost'])):
+                             ['count', 'access_mode', 'array_access_cost', 'array_dim'])):
     '''
     Parallelism specification.
 
@@ -37,6 +37,8 @@ class Parallelism(namedtuple('Parallelism',
     goes to next level buffer.
 
     Array access cost is the cost of accessing array level buffers.
+
+    Array dimension is the dimension of PE array, whether it is 1D or 2D.
     
     Note: shared buffer level is the level
     index of the lowest shared buffer for this parallelism.
@@ -52,8 +54,8 @@ class Resource(object):
     '''
 
     def __init__(self, buf_capacity_list, buf_access_cost_list,
-                 buf_unit_static_cost_list, para_count_list, 
-                 mac_capacity=1, partition_mode=None, array_access_cost=None, partition_loops=None):
+                 buf_unit_static_cost_list, para_count_list,  
+                 mac_capacity=1, partition_mode=None, array_access_cost=None, partition_loops=None, array_dim = None):
 
         # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
@@ -76,20 +78,25 @@ class Resource(object):
                 if partition_mode[i] == 1 :
                     array_access_costs[i] = array_access_cost[array_level]
                     array_level += 1
+
+
+        if not array_dim:
+            array_dim = [2 if e != 1 else 1 for e in para_count_list]
  
         self.paras = [Parallelism(*t) for t in zip(para_count_list, \
-            partition_mode, array_access_costs)]
+            partition_mode, array_access_costs, array_dim)]
         self.access_cost = buf_access_cost_list
         self.mac_capacity = mac_capacity
         self.array_access_cost = array_access_cost
         self.partition_loops = partition_loops
         self.para_count_list = para_count_list
 
+
     @classmethod
     def arch(cls, info):
         return cls(info["capacity"], info["access_cost"], info["static_cost"],
                         info["parallel_count"], info["mac_capacity"], info["parallel_mode"],
-                        info["parallel_cost"]) #TODO partition_loops  
+                        info["parallel_cost"], info["array_dim"]) #TODO partition_loops  
 
     def buffer_levels(self):
         '''

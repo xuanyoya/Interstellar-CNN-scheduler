@@ -4,6 +4,7 @@ Hardware resource types.
 #import numpy as np
 from collections import namedtuple
 from operator import mul
+import math
 
 class Buffer(namedtuple('Buffer',
                         ['capacity', 'access_cost', 'unit_static_cost'])):
@@ -22,7 +23,7 @@ class Buffer(namedtuple('Buffer',
     pass
 
 class Parallelism(namedtuple('Parallelism',
-                             ['count', 'access_mode', 'array_access_cost', 'array_dim'])):
+                             ['count', 'access_mode', 'array_access_cost', 'array_dim', 'array_width'])):
     '''
     Parallelism specification.
 
@@ -39,6 +40,9 @@ class Parallelism(namedtuple('Parallelism',
     Array access cost is the cost of accessing array level buffers.
 
     Array dimension is the dimension of PE array, whether it is 1D or 2D.
+
+    Array width is the width of PE array, if 1D array, same as array dimension. 
+    if 2D array, sqrt(array_dim)
     
     Note: shared buffer level is the level
     index of the lowest shared buffer for this parallelism.
@@ -82,9 +86,11 @@ class Resource(object):
 
         if not array_dim:
             array_dim = [2 if e != 1 else 1 for e in para_count_list]
+
+        array_width = [para_count_list[i] if array_dim[i] == 1 else int(math.sqrt(para_count_list[i])) for i in xrange(len(para_count_list))]
  
         self.paras = [Parallelism(*t) for t in zip(para_count_list, \
-            partition_mode, array_access_costs, array_dim)]
+            partition_mode, array_access_costs, array_dim, array_width)]
         self.access_cost = buf_access_cost_list
         self.mac_capacity = mac_capacity
         self.array_access_cost = array_access_cost

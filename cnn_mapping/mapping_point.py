@@ -23,12 +23,13 @@ class MappingPoint(object):
     '''
 
     def __init__(self, loop_order_list, loop_blockings_list,
-                 loop_partitionings_list):
+                 loop_partitionings_list, para_loop_dim_list=None):
         # NOTE(mgao12): no value validation here; cost model needs to abandon
         # invalid mapping.
         self.loop_orders = loop_order_list
         self.loop_blockings = loop_blockings_list
         self.loop_partitionings = loop_partitionings_list
+        self.para_loop_dim = para_loop_dim_list
 
     def loop_order(self, loop):
         '''

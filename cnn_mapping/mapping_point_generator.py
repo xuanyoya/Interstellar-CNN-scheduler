@@ -149,8 +149,13 @@ def factors(n):
                 ([i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0)))
 
 def bounded_factor(n, end):
-    s = set(reduce(list.__add__,
-                ([i, n//i] if n % i == 0 and n//i <= end else [i] for i in range(1, int(n**0.5)+1))))
+    l = []
+    for i in xrange(1, int(n**0.5)+1):
+        if n % i == 0 and n//i <= end:
+            l.__iadd__([i, n//i])
+        elif n % i == 0:
+            l.__iadd__([i])
+    s = set(l)
     s.remove(1)
     return s 
 
@@ -390,12 +395,12 @@ def current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer):
    
 def current_level_partition_blocking(slb, para, layer):
 
-    para_count = int(math.log(para.count, para.array_dim))
-
+    para_count = para.array_width
     loop_tiles = []
     for l in xrange(le.NUM):
         loop_tiles.append(bounded_factor(slb[l], para_count))   
- 
+    
+    #print "loop tile ", loop_tiles
     if para.array_dim == 1:
         return current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer)
     else: 
@@ -438,8 +443,9 @@ def parallel_blocking_generator_function(lp, resource, layer, hint=None, under_u
     para_dim_generator = para_dim_generator_function(para_dim_permutations)
     for partition in itertools.product(*para_permutations) :
         para_dim = para_dim_generator.next()
+        #print partition, para_dim
         yield [partition, para_dim]
-
+'''
 def blocking_partitioning_generator_function_with_hint(resource, layer, hint, verbose=False):
     
     #loop_blocking_list and loop_partitioning_list generator.
@@ -453,7 +459,8 @@ def blocking_partitioning_generator_function_with_hint(resource, layer, hint, ve
         loop_blocking_reshape = zip(*loop_blocking)
         pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, hint)
         
-        for partition in pb_generator:
+        for pi in pb_generator:
+            partition, para_dim = pi
             partitioned_loop_blocking_reshape = []
             for level in xrange(num_level):
                 partitioned_loop_blocking_reshape.append([ (x+y-1) // y 
@@ -461,12 +468,12 @@ def blocking_partitioning_generator_function_with_hint(resource, layer, hint, ve
             blocking_list = zip(*partitioned_loop_blocking_reshape)
             partitioning_list = zip(*partition)
             
-            dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list)
+            dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list, para_dim)
             if cost_model.valid_partitioning(resource, dummy_mapping_point, layer, verbose):
             #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
-                yield [blocking_list, partitioning_list]
+                yield [blocking_list, partitioning_list, para_dim]
  
-
+'''
 def blocking_partitioning_generator_function(resource, layer, verbose=False):
     
     #loop_blocking_list and loop_partitioning_list generator.
@@ -480,7 +487,8 @@ def blocking_partitioning_generator_function(resource, layer, verbose=False):
         loop_blocking_reshape = zip(*loop_blocking)
         pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, None)
         
-        for partition in pb_generator:
+        for pi in pb_generator:
+            partition, para_dim = pi
             partitioned_loop_blocking_reshape = []
             for level in xrange(num_level):
                 partitioned_loop_blocking_reshape.append([ (x+y-1) // y 
@@ -488,10 +496,10 @@ def blocking_partitioning_generator_function(resource, layer, verbose=False):
             blocking_list = zip(*partitioned_loop_blocking_reshape)
             partitioning_list = zip(*partition)
             
-            dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list)
+            dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list, para_dim)
             if cost_model.valid_partitioning(resource, dummy_mapping_point, layer, verbose):
             #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
-                yield [blocking_list, partitioning_list]
+                yield [blocking_list, partitioning_list, para_dim]
     
         
 
@@ -505,7 +513,8 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
     best_loop_order = []
     blocking = point.loop_blockings
     partitioning = point.loop_partitionings
-    #dummy_partitioning = [(1,) * num_levels] * le.NUM 
+    para_dim = point.para_loop_dim
+
     non_empty_loops = get_non_empty_loops(point, num_levels)
     #print blocking, partitioning
 
@@ -516,7 +525,7 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
         for curr_level_order in level_order_generator_function(point, le.NUM, non_empty_loops, level):
             dummy_loop_order = [[0] * le.NUM] * num_levels 
             dummy_loop_order[level] = curr_level_order
-            mapping_point = MappingPoint(zip(*dummy_loop_order), blocking, partitioning)        
+            mapping_point = MappingPoint(zip(*dummy_loop_order), blocking, partitioning, para_dim)        
             if level <= 0 or resource.paras[level-1].count <= 1 \
                 or resource.paras[level-1].access_mode < 1:
                 curr_cost = cost_model.get_level_cost(resource, mapping_point, layer, level, verbose)
@@ -540,13 +549,8 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
     '''
 
     num_levels = resource.buffer_levels()
-    #TODO merge the two cases
-    if not hint:
-        blocking_partitioning_generator = \
-            blocking_partitioning_generator_function(resource, layer)
-    else :
-         blocking_partitioning_generator = \
-            blocking_partitioning_generator_function_with_hint(resource, layer, hint)
+    blocking_partitioning_generator = \
+        blocking_partitioning_generator_function(resource, layer, hint)
 
     #dummy_partitioning = [(1,) * num_levels] * le.NUM  
 
@@ -562,8 +566,8 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
         '''
         if verbose >= 2:
             print "Find best order for schedule: ", blocking_partitioning
-        [blocking, partitioning] = blocking_partitioning
-        dummy_mapping_point = MappingPoint(None, blocking, partitioning)
+        [blocking, partitioning, para_dim] = blocking_partitioning
+        dummy_mapping_point = MappingPoint(None, blocking, partitioning, para_dim)
         #print "blocking_partitioning: ", blocking_partitioning
         cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)
         if cost < smallest_cost:

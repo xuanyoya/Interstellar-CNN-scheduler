@@ -5,6 +5,7 @@ def print_loop_nest(point):
     loop_orders = zip(*point.loop_orders)
     loop_blockings = zip(*point.loop_blockings)
     loop_partitionings = zip(*point.loop_partitionings)
+    para_dims = point.para_loop_dim
     num_level = len(loop_orders)
     order_lists = []
     for level in xrange(num_level):
@@ -17,5 +18,5 @@ def print_loop_nest(point):
                 
         order_lists.append(order_list) 
 
-    print order_lists
+    print order_lists, para_dims
 

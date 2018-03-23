@@ -572,7 +572,7 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
         cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)
         if cost < smallest_cost:
             smallest_cost = cost
-            best_mapping_point = MappingPoint(loop_order, blocking, partitioning)
+            best_mapping_point = MappingPoint(loop_order, blocking, partitioning, para_dim)
             if verbose:
                 print "best loop order: ", best_mapping_point.loop_orders
                 print "Update smallest cost: ", smallest_cost

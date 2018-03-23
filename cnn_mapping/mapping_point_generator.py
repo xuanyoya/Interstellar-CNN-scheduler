@@ -10,6 +10,8 @@ import itertools
 import copy
 from operator import mul
 import math
+import pickle
+
 
 from mapping_point import MappingPoint
 from cache import Cache
@@ -616,17 +618,20 @@ def mapping_point_generator_function(resource, layer, hint=None, verbose=False):
                                 partitioning)
                 yield mapping_point
 
-def partitioned_loop_string(partitioning, parallel_levels):
+def partitioned_loop_string(partitioning, parallel_levels, para_dim):
     #TODO check for multi-level parallel case
     res = ""
    
     utilized = 1
     partitioning_reshape = zip(*partitioning)
     for level in parallel_levels:
-        for i, e in enumerate(partitioning_reshape[level]):
-            if e != 1:
-                res += str(i)
+        for para_idx in para_dim[level]:
+            res += "("
+            for loop in para_idx:
+                e = partitioning_reshape[level][loop]
                 utilized *= e
+                res += str(loop)
+            res += ")"
     return [res, utilized]
 
 
@@ -650,7 +655,7 @@ def dataflow_exploration(resource, layer, verbose=False):
 
     dataflow_tb = {}
     num_levels = resource.buffer_levels()
-    parallel_levels = [i for i, e in enumerate(resource.paras) if e != 1]
+    parallel_levels = [i for i, e in enumerate(resource.paras) if e.count != 1]
  
     blocking_partitioning_generator = \
         blocking_partitioning_generator_function(resource, layer)
@@ -669,20 +674,21 @@ def dataflow_exploration(resource, layer, verbose=False):
         '''
         if verbose >= 2:
             print "Find best order for schedule: ", blocking_partitioning
-        [blocking, partitioning] = blocking_partitioning
-        dummy_mapping_point = MappingPoint(None, blocking, partitioning)
+        [blocking, partitioning, para_dim] = blocking_partitioning
+        dummy_mapping_point = MappingPoint(None, blocking, partitioning, para_dim)
         #print "partitioning: ", partitioning
-        unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels)
+        unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels, para_dim)
         utilization = get_utilization(utilized, resource)
         cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)
         if unrolled_loops not in dataflow_tb or dataflow_tb[unrolled_loops][0] > cost:
-            dataflow_tb[unrolled_loops] = (cost, utilization) #TODO utilization
-            best_mapping_point = MappingPoint(loop_order, blocking, partitioning)
+            best_mapping_point = MappingPoint(loop_order, blocking, partitioning, para_dim)
+            dataflow_tb[unrolled_loops] = (cost, utilization, best_mapping_point) #TODO utilization
             if verbose:
                 print "unrolled loops: ", unrolled_loops, " with utilization ", utilization
                 #print "best loop order: ", best_mapping_point.loop_orders
                 print "Update smallest cost: ", dataflow_tb[unrolled_loops][0]
                 #print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
     #assert best_mapping_point, "No valid mapping point found."
+        pickle.dump(dataflow_tb, open("dataflow_table.pickle", "wb"))
     return dataflow_tb 
             

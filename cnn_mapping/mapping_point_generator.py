@@ -357,7 +357,9 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer):
                 para_permutation.append(slp)
                 para_dim_permutation.append([para_index])
             else:
-                for l1 in xrange(l0+1, le.NUM): 
+                for l1 in xrange(le.NUM):
+                    if l1 == l0:
+                        continue 
                     for f1 in loop_tiles[l1]:
                         if 2*f1*f0 > para_count and f1*f0 <= para_count:
                             new_slp = copy.copy(slp) 

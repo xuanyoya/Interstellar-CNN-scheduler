@@ -34,7 +34,7 @@ def get_if_access(level, point, layer, mac_capacity = 1):
     loop of ifmap-related loops, their blocking factors and parallelism counts
     at this level should also contribute to the number of accesses.
     '''
-    
+
     if level == 0 and mac_capacity == 0:
         return layer.wfil * layer.hfil * layer.nofm / (layer.wstd * layer.hstd)
     
@@ -297,7 +297,6 @@ def get_array_access_and_cost(level, para, access_list, point):
  
     [if_block_access, of_block_access, fl_block_access] = access_list
     partitions = zip(*point.loop_partitionings)[level]
-    orders = zip(*point.loop_orders)[level]
     para_dim = point.para_loop_dim[level]
 
     partitions_nearest = [1,]*le.NUM
@@ -309,8 +308,7 @@ def get_array_access_and_cost(level, para, access_list, point):
         if len(para_index) == 1:
             partitions_nearest[para_index[0]] = partitions[para_index[0]]
         else:
-            inner_loop, outer_loop = para_index if orders[para_index[0]] < orders[para_index[1]] \
-                else reversed(para_index)
+            inner_loop, outer_loop = para_index  
             partitions_nearest[inner_loop] = partitions[inner_loop] 
             partitions_far[i][outer_loop] = partitions[outer_loop]
             across_block_cost[i] = para_cost * partitions[inner_loop] 
@@ -570,7 +568,7 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
         total_cost += sum(buffer_access) *level_cost[i]
 
     if verbose >= 2:
-        print "Level ", level, " array level access: ", total_access 
+        print "Level ", level, " array level access: ", level_access 
  
     return total_cost
 
@@ -590,33 +588,12 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
     level_cost = sum(total_buffer_access) * resource.access_cost[level]
 
     if verbose >= 2:
-        print "Level ", level, " access: ", level_access 
+        print "Level ", level, " access: ", buffer_level_access 
  
     level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access, verbose)
 
     return level_cost
 
-'''
-def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
-    layer_size = get_layer_size(layer)
-    mac_capacity = resource.mac_capacity
-
-    of_access = get_of_access(level, point, layer, mac_capacity) 
-    level_access = [get_if_access(level, point, layer, mac_capacity), \
-                    2 * of_access - 1, \
-                    get_fl_access(level, point, layer, mac_capacity)] 
-
-    buffer_access = map(mul, level_access, layer_size)
-    level_cost = sum(buffer_access) * resource.access_cost[level]
-
-    if verbose >= 2:
-        print "Level ", level, " access: ", level_access 
- 
-    level_access[1] = of_access 
-    level_cost += get_array_level_cost(resource, point, layer_size, level-1, level_access, verbose)
-
-    return level_cost
-'''
     
 def get_level_cost(resource, point, layer, level, verbose=False):
     layer_size = get_layer_size(layer)

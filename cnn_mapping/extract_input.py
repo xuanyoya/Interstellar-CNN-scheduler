@@ -18,6 +18,8 @@ def extract_arch_info(arch_file):
     num_bytes = data["precision"]/8
     capacity_list =  [x/num_bytes for x in data["capacity"]]
     data["capacity"] = capacity_list
+    if "partition_loops" not in data:
+        data["partition_loops"] = None
     if "array_dim" not in data:
         data["array_dim"] = None
     return data

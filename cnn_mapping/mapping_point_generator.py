@@ -355,7 +355,7 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer):
             para_index = [l0]
             if f0 <= para_count and 2*f0 > para_count:
                 para_permutation.append(slp)
-                para_dim_permutation.append(para_index)
+                para_dim_permutation.append([para_index])
             else:
                 for l1 in xrange(l0+1, le.NUM): 
                     for f1 in loop_tiles[l1]:
@@ -366,7 +366,7 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer):
 
                             new_para_index = copy.copy(para_index)
                             new_para_index.append(l1)
-                            para_dim_permutation.append(new_para_index)
+                            para_dim_permutation.append([new_para_index])
 
     return [para_permutation, para_dim_permutation]
 
@@ -385,10 +385,10 @@ def current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer):
     for slps in itertools.combinations(para_perm_1d, 2):
         slp0, slp1 = slps 
         para_index0, para_index1 = para_index_generator.next()
-        if set(para_index0).isdisjoint(set(para_index1)):
+        if set(para_index0[0]).isdisjoint(set(para_index1[0])):
             combined_slp = [a*b for a,b in zip(slp0, slp1)]
             para_permutation.append(combined_slp)
-            combined_dim = [para_index0, para_index1]
+            combined_dim = [para_index0[0], para_index1[0]]
             para_dim_permutation.append(combined_dim)
 
     return [para_permutation, para_dim_permutation]
@@ -421,7 +421,7 @@ def parallel_blocking_generator_function(lp, resource, layer, hint=None, under_u
             para_dim_permutations.append([None])  
         else :
             para = resource.paras[level]
-            para_count = int(math.log(para.count, para.array_dim))
+            para_count = para.array_width
             if hint == None: 
                 #current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count, layer, under_utilized) 
                 para_permutation, para_dim_permutation = current_level_partition_blocking(lp[level], para, layer)

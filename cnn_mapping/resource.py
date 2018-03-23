@@ -102,7 +102,7 @@ class Resource(object):
     def arch(cls, info):
         return cls(info["capacity"], info["access_cost"], info["static_cost"],
                         info["parallel_count"], info["mac_capacity"], info["parallel_mode"],
-                        info["parallel_cost"], info["array_dim"]) #TODO partition_loops  
+                        info["parallel_cost"], info["partition_loops"], info["array_dim"]) #TODO partition_loops  
 
     def buffer_levels(self):
         '''

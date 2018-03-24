@@ -1,6 +1,7 @@
 import numpy as np
 import argparse
 import math
+import time
 import cnn_mapping as cm
 
 def basic_optimizer(arch_info, network_info, schedule_info, basic=False, verbose=False):    
@@ -69,7 +70,7 @@ def dataflow_explore_optimizer(arch_info, network_info, verbose=False):
     dataflow_tb = cm.mapping_point_generator.dataflow_exploration(resource, layer, verbose)
     
     if verbose:
-        print "dataflow table: ", dataflow_tb
+        print "dataflow table done "
 
 
 if __name__ == "__main__":
@@ -81,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--verbose", action='count', help="vebosity")
     args = parser.parse_args()
 
+    start = time.time()
     arch_info, network_info, schedule_info = cm.extract_input.extract_info(args)    
     if args.type == "basic":
         basic_optimizer(arch_info, network_info, schedule_info, True, args.verbose)
@@ -88,5 +90,6 @@ if __name__ == "__main__":
         mem_explore_optimizer(arch_info, network_info, schedule_info, args.verbose)
     elif args.type == "dataflow_explore":
         dataflow_explore_optimizer(arch_info, network_info, args.verbose)
-
+    end = time.time()
+    print "elasped time: ", (end-start)
 

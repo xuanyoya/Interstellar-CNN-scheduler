@@ -482,7 +482,8 @@ def get_block_sizes(num_levels, point, layer):
     return [bank_list, block_list]
 
 def fit_in_level(cap, blocks):
-    return sum(blocks) <= cap
+    total_size = sum(blocks)
+    return (total_size <= cap) and (2*total_size >= cap)
 
 def valid_partition_number(resource, partitioning, level):
     max_parallelism = resource.parallelism(level).count

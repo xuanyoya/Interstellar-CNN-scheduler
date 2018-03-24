@@ -647,7 +647,7 @@ def get_utilization(utilized, resource):
     return utilized*1.0/total
     
 
-def dataflow_exploration(resource, layer, verbose=False):
+def dataflow_exploration(resource, layer, file_name, verbose=False):
     '''
     Dataflow exploration.
 
@@ -691,6 +691,7 @@ def dataflow_exploration(resource, layer, verbose=False):
                 print "Update smallest cost: ", dataflow_tb[unrolled_loops][0]
                 #print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
     #assert best_mapping_point, "No valid mapping point found."
-        pickle.dump(dataflow_tb, open("dataflow_table.pickle", "wb"))
+        pickle_file_name = file_name + ".pickle"
+        pickle.dump(dataflow_tb, open(pickle_file_name, "wb"))
     return dataflow_tb 
             

@@ -60,14 +60,14 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
     return dataflow_res
 
 
-def dataflow_explore_optimizer(arch_info, network_info, verbose=False):
+def dataflow_explore_optimizer(arch_info, network_info, file_name, verbose=False):
 
     assert arch_info["parallel_count"] > 1, \
         "parallel count has to be more than 1 for dataflow exploration"
 
     resource = cm.Resource.arch(arch_info) 
     layer = cm.Layer.layer(network_info)
-    dataflow_tb = cm.mapping_point_generator.dataflow_exploration(resource, layer, verbose)
+    dataflow_tb = cm.mapping_point_generator.dataflow_exploration(resource, layer, file_name, verbose)
     
     if verbose:
         print "dataflow table done "
@@ -79,6 +79,7 @@ if __name__ == "__main__":
     parser.add_argument("arch", help="architecture specification")
     parser.add_argument("network", help="network specification")
     parser.add_argument("-s", "--schedule", help="restriction of the schedule space")
+    parser.add_argument("-n", "--name", help="name for the dumped pickle file")
     parser.add_argument("-v", "--verbose", action='count', help="vebosity")
     args = parser.parse_args()
 
@@ -89,7 +90,7 @@ if __name__ == "__main__":
     elif args.type == "mem_explore":
         mem_explore_optimizer(arch_info, network_info, schedule_info, args.verbose)
     elif args.type == "dataflow_explore":
-        dataflow_explore_optimizer(arch_info, network_info, args.verbose)
+        dataflow_explore_optimizer(arch_info, network_info, args.name, args.verbose)
     end = time.time()
     print "elasped time: ", (end-start)
 

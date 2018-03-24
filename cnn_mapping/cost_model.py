@@ -481,22 +481,23 @@ def get_block_sizes(num_levels, point, layer):
 
     return [bank_list, block_list]
 
-def fit_in_level(cap, blocks):
+def fit_in_level(cap, blocks, invalid_underutilized):
     total_size = sum(blocks)
-    return (total_size <= cap) and (2*total_size >= cap)
-
+    if invalid_underutilized:
+        return (total_size <= cap) and (2*total_size >= cap)
+    else:
+        return (total_size <= cap) 
+ 
 def valid_partition_number(resource, partitioning, level):
     max_parallelism = resource.parallelism(level).count
     actual_parallelism = reduce(mul, partitioning[level], 1)
     return actual_parallelism <= max_parallelism  
 
 def valid_partitioning_current_level(resource, point, layer, level, verbose=False):
-    valid_size = fit_in_level(resource.buffer(level).capacity, 
-             get_bank_size(point, layer, level)) 
+    valid_size = fit_in_level(resource.buffer(level).capacity, \
+             get_bank_size(point, layer, level), True) 
 
-    partitioning = zip(*(point.loop_partitionings)) 
-    valid_para = valid_partition_number(resource, partitioning, level)    
-    return valid_size and valid_para
+    return valid_size 
 
 def valid_mapping_point_current_level(resource, point, layer, level, verbose=False):
     if resource.paras[level].count > 1:
@@ -516,15 +517,17 @@ def valid_mapping_point_current_level(resource, point, layer, level, verbose=Fal
     return valid_size and valid_para 
 
 def valid_partitioning(resource, point, layer, verbose=False):
-    para_level = [i for i, e in enumerate(resource.paras) if e.count != 0]
+    para_level = resource.para_index 
     for level in para_level:
         if not valid_partitioning_current_level(resource, point, layer, level, verbose):
             return False
     return True
 
 def valid_blocking_size_current_level(resource, point, layer, level, verbose=False):
+    if level == resource.buffer_levels()-1:
+        return True
     return fit_in_level(resource.buffer(level).capacity * resource.paras[level].count, 
-        get_block_size(point, layer, level))
+        get_block_size(point, layer, level), (level not in resource.para_index))
 
 
 def valid_blocking_size(resource, point, layer, verbose=False):

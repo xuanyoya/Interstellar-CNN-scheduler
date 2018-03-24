@@ -64,17 +64,19 @@ class Resource(object):
         # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
         assert len(buf_capacity_list) == len(buf_unit_static_cost_list)
+        assert len(buf_capacity_list) == len(para_count_list)
         
         self.bufs = [Buffer(*t) for t in zip(buf_capacity_list, \
             buf_access_cost_list, buf_unit_static_cost_list)]
 
+        self.num_levels = len(self.bufs)
         # Parallelism.
         array_access_costs = [None] * len(para_count_list)
         if not partition_mode :
             partition_mode = [0] * len(para_count_list)
         else :
             array_level = 0
-            for i in xrange(len(para_count_list)):
+            for i in xrange(self.num_levels):
                 # when using non-default partition mode, the parallelism
                 # count needs to be large than 1
                 assert partition_mode[i] == 0 or para_count_list <= 1 \
@@ -82,12 +84,13 @@ class Resource(object):
                 if partition_mode[i] == 1 :
                     array_access_costs[i] = array_access_cost[array_level]
                     array_level += 1
-
+ 
+        self.para_index = [i for i, e in enumerate(para_count_list) if e != 1]
 
         if not array_dim:
             array_dim = [2 if e != 1 else 1 for e in para_count_list]
 
-        array_width = [para_count_list[i] if array_dim[i] == 1 else int(math.sqrt(para_count_list[i])) for i in xrange(len(para_count_list))]
+        array_width = [para_count_list[i] if array_dim[i] == 1 else int(math.sqrt(para_count_list[i])) for i in xrange(self.num_levels)]
  
         self.paras = [Parallelism(*t) for t in zip(para_count_list, \
             partition_mode, array_access_costs, array_dim, array_width)]
@@ -108,7 +111,7 @@ class Resource(object):
         '''
         Return total levels of buffers in the hierarchy.
         '''
-        return len(self.bufs)
+        return self.num_levels
 
     def buffer(self, level):
         '''

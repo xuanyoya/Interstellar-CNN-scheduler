@@ -473,6 +473,7 @@ def blocking_partitioning_generator_function_with_hint(resource, layer, hint, ve
             partitioning_list = zip(*partition)
             
             dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list, para_dim)
+            print partitioning_list, para_dim
             if cost_model.valid_partitioning(resource, dummy_mapping_point, layer, verbose):
             #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
                 yield [blocking_list, partitioning_list, para_dim]
@@ -500,6 +501,7 @@ def blocking_partitioning_generator_function(resource, layer, verbose=False):
             blocking_list = zip(*partitioned_loop_blocking_reshape)
             partitioning_list = zip(*partition)
             
+            #print partitioning_list, para_dim
             dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list, para_dim)
             if cost_model.valid_partitioning(resource, dummy_mapping_point, layer, verbose):
             #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
@@ -655,7 +657,7 @@ def dataflow_exploration(resource, layer, verbose=False):
 
     dataflow_tb = {}
     num_levels = resource.buffer_levels()
-    parallel_levels = [i for i, e in enumerate(resource.paras) if e.count != 1]
+    parallel_levels = resource.para_index 
  
     blocking_partitioning_generator = \
         blocking_partitioning_generator_function(resource, layer)

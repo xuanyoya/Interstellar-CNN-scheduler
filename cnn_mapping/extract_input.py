@@ -53,7 +53,7 @@ def extract_schedule_info(schedule_file, num_levels):
                 schedule_hint[le.loop_table[loop]][level_index][1] = data[loop][level]["blocking_size"]
             if  "partitioning_size" in data[loop][level]:
                 schedule_hint[le.loop_table[loop]][level_index][2] = data[loop][level]["partitioning_size"]
-  
+    #TODO partition at dimension  
     return schedule_hint
 
 

@@ -348,7 +348,10 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer):
 
     return [para_permutation, para_dim_permutation]
 
-def current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, level, cur_loop, hint, partition_loops):
+def current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, level, cur_loop, schedule):
+
+    hint = schedule.schedule_hint
+    partition_loops = schedule.partition_loops
     para_permutation = []
     para_dim_permutation = []
     cur_para_factor = hint[cur_loop][level][2]
@@ -395,14 +398,14 @@ def para_index_generator_function_with_hint(para_index_perm):
     for e in itertools.product(*para_index_perm):
         yield e
 
-def current_level_partition_blocking_2d_with_hint(loop_tiles, slb, para_count, layer, level, hint, partition_loops):
+def current_level_partition_blocking_2d_with_hint(loop_tiles, slb, para_count, layer, level, schedule):
     para_permutation = []
     para_dim_permutation = []
 
     para_perm_1d0, para_index_perm_1d0 = current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, \
-        level, hint.keys()[0], hint, partition_loops)
+        level, schedule.hint_para_index[level][0], schedule)
     para_perm_1d1, para_index_perm_1d1 = current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, \
-        level, hint.keys()[1], hint, partition_loops)
+        level, schedule.hint_para_index[level][1], schedule)
     para_index_generator = para_index_generator_function_with_hint([para_index_perm_1d0, para_index_perm_1d1])
 
     for slps in itertools.product(*[para_perm_1d0, para_perm_1d1]):
@@ -449,7 +452,7 @@ def current_level_partition_blocking(slb, para, layer):
     else: 
         return current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer)
 
-def current_level_partition_blocking_with_hint(slb, para, layer, level, hint, partition_loops):
+def current_level_partition_blocking_with_hint(slb, para, layer, level, schedule):
     para_count = para.array_width
     loop_tiles = []
     for l in xrange(le.NUM):
@@ -457,11 +460,11 @@ def current_level_partition_blocking_with_hint(slb, para, layer, level, hint, pa
 
     #print "loop tile ", loop_tiles
     if para.array_dim == 1:
-        assert len(hint.keys()) <= 1, "do not support unrolling more than 2 loops in the schedule hint"
-        return current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, level, hint.keys()[0], hint, partition_loops)
+        assert len(schedule.hint_para_index[level]) <= 1, "do not support unrolling more than 2 loops in the schedule hint"
+        return current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, level, schedule.hint_para_index[level][0], schedule)
     else: 
-        assert len(hint.keys()) <= 2, "do not support unrolling more than 2 loops in the schedule hint"
-        return current_level_partition_blocking_2d_with_hint(loop_tiles, slb, para_count, layer, level, hint, partition_loops)
+        assert len(schedule.hint_para_index[level]) <= 2, "do not support unrolling more than 2 loops in the schedule hint"
+        return current_level_partition_blocking_2d_with_hint(loop_tiles, slb, para_count, layer, level, schedule)
 
 
 def para_dim_generator_function(para_dim_permutations):
@@ -469,7 +472,7 @@ def para_dim_generator_function(para_dim_permutations):
         yield para_dim
 
 
-def parallel_blocking_generator_function(lp, resource, layer, hint=None):
+def parallel_blocking_generator_function(lp, resource, layer, schedule=None):
     num_level = resource.buffer_levels()
 
     para_permutations = []
@@ -481,21 +484,21 @@ def parallel_blocking_generator_function(lp, resource, layer, hint=None):
         else :
             para = resource.paras[level]
             para_count = para.array_width
-            if hint == None: 
+            if schedule == None: 
                 #current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count, layer, under_utilized) 
                 para_permutation, para_dim_permutation = current_level_partition_blocking(lp[level], para, layer)
                 para_permutations.append(para_permutation)
                 para_dim_permutations.append(para_dim_permutation)
             else:
-                hinted_para = get_hinted_para(layer, level, hint)
+                hinted_para = get_hinted_para(layer, level, schedule.schedule_hint)
                 assert hinted_para <= para.count, "total parallelism in schedule hint exceeds the maximum parallelism"
                 if  para.count >= hinted_para * 2 :
                     new_para_count = para.count/hinted_para
-                    para_permutation, para_dim_permutation = current_level_partition_blocking_with_hint(lp[level], para, layer, level, hint, resource.partition_loops)
+                    para_permutation, para_dim_permutation = current_level_partition_blocking_with_hint(lp[level], para, layer, level, schedule)
                     para_permutations.append(para_permutation)
                     para_dim_permutations.append(para_dim_permutation)
                 else :
-                    para_permutation, para_dim_permutation = get_hinted_partitioning(level, hint) 
+                    para_permutation, para_dim_permutation = get_hinted_partitioning(level, schedule.schedule_hint) 
                     para_permutations.append(para_permutation)
                     para_dim_permutations.append(para_dim_permutation)
 
@@ -538,18 +541,18 @@ def blocking_partitioning_generator_function_with_hint(resource, layer, hint, ve
                 yield [blocking_list, partitioning_list, para_dim]
  
 '''
-def blocking_partitioning_generator_function(resource, layer, hint, verbose=False):
+def blocking_partitioning_generator_function(resource, layer, schedule, verbose=False):
     
     #loop_blocking_list and loop_partitioning_list generator.
     
     num_level = resource.buffer_levels()
-    blocking_generator = blocking_generator_function(resource, layer, hint, verbose)
+    blocking_generator = blocking_generator_function(resource, layer, schedule.schedule_hint, verbose)
 
     for loop_blocking in blocking_generator:
         #print "loop_blocking: ", loop_blocking
         
         loop_blocking_reshape = zip(*loop_blocking)
-        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, hint)
+        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, schedule)
         
         for pi in pb_generator:
             partition, para_dim = pi
@@ -606,7 +609,7 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
 
     return best_cost, zip(*best_loop_order)
 
-def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=False):
+def opt_mapping_point_generator_function(resource, layer, schedule=None, verbose=False):
     '''
     Mapping point generator.
 
@@ -615,7 +618,7 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
 
     num_levels = resource.buffer_levels()
     blocking_partitioning_generator = \
-        blocking_partitioning_generator_function(resource, layer, hint)
+        blocking_partitioning_generator_function(resource, layer, schedule)
 
     #dummy_partitioning = [(1,) * num_levels] * le.NUM  
 
@@ -646,7 +649,7 @@ def opt_mapping_point_generator_function(resource, layer, hint=None, verbose=Fal
     return smallest_cost, best_mapping_point
  
 
-def mapping_point_generator_function(resource, layer, hint=None, verbose=False):
+def mapping_point_generator_function(resource, layer, schedule=None, verbose=False):
     '''
     Mapping point generator.
 
@@ -656,7 +659,7 @@ def mapping_point_generator_function(resource, layer, hint=None, verbose=False):
     num_levels = resource.buffer_levels()
 
     blocking_partitioning_generator = \
-        blocking_partitioning_generator_function(resource, layer, hint)
+        blocking_partitioning_generator_function(resource, layer, schedule)
 
     for blocking_partitioning in blocking_partitioning_generator:
         ''' 

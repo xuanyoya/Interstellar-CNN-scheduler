@@ -18,8 +18,8 @@ def extract_arch_info(arch_file):
     num_bytes = data["precision"]/8
     capacity_list =  [x/num_bytes for x in data["capacity"]]
     data["capacity"] = capacity_list
-    if "partition_loops" not in data:
-        data["partition_loops"] = None
+    #if "partition_loops" not in data:
+    #    data["partition_loops"] = None
     if "array_dim" not in data:
         data["array_dim"] = None
     return data
@@ -41,20 +41,26 @@ def extract_schedule_info(schedule_file, num_levels):
     with open(schedule_file) as json_data_file:
         data = json.load(json_data_file)
 
+    schedule = {}
+    hint = data["schedule_hint"]
     schedule_hint = {}
-    for loop in data:
+    for loop in hint:
         schedule_hint[le.loop_table[loop]] = [None,]*num_levels
-        for level in data[loop]:
+        for level in hint[loop]:
             level_index = int(level.lstrip('level'))
             schedule_hint[le.loop_table[loop]][level_index] = [None,]*3
-            if  "order" in data[loop][level]:
-                schedule_hint[le.loop_table[loop]][level_index][0] = data[loop][level]["order"]
-            if  "blocking_size" in data[loop][level]:
-                schedule_hint[le.loop_table[loop]][level_index][1] = data[loop][level]["blocking_size"]
-            if  "partitioning_size" in data[loop][level]:
-                schedule_hint[le.loop_table[loop]][level_index][2] = data[loop][level]["partitioning_size"]
+            if  "order" in hint[loop][level]:
+                schedule_hint[le.loop_table[loop]][level_index][0] = hint[loop][level]["order"]
+            if  "blocking_size" in hint[loop][level]:
+                schedule_hint[le.loop_table[loop]][level_index][1] = hint[loop][level]["blocking_size"]
+            if  "partitioning_size" in hint[loop][level]:
+                schedule_hint[le.loop_table[loop]][level_index][2] = hint[loop][level]["partitioning_size"]
+
+    schedule["schedule_hint"] = schedule_hint
+    if "partition_loops" not in data:
+        schedule["partition_loops"] = None
     #TODO partition at dimension  
-    return schedule_hint
+    return schedule
 
 
 def extract_info(args):

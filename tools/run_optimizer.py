@@ -8,7 +8,8 @@ def basic_optimizer(arch_info, network_info, schedule_info, basic=False, verbose
 
     resource = cm.Resource.arch(arch_info) 
     layer = cm.Layer.layer(network_info)
-    opt_result = cm.optimizer.opt_optimizer(resource, layer, schedule_info, verbose)
+    schedule = cm.Schedule.schedule(schedule_info)
+    opt_result = cm.optimizer.opt_optimizer(resource, layer, schedule, verbose)
     
     level_costs = cm.cost_model.get_level_costs(resource, opt_result[1], layer, verbose)
     if verbose or basic:

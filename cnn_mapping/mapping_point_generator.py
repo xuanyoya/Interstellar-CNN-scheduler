@@ -264,12 +264,15 @@ def opt_valid_blocking(blocking_cache, resource, layer, blocking):
            return False
    return True 
     
-def blocking_generator_function(resource, layer, hint=None ,verbose=False):
+def blocking_generator_function(resource, layer, schedule=None ,verbose=False):
 
     '''
     Generate all possible loop tilings for each loop,
     store them in one list. 
     '''
+
+    hint = schedule.schedule_hint if schedule != None else None
+
     num_levels = resource.buffer_levels()
 
     all_tile_permutations = []
@@ -546,7 +549,7 @@ def blocking_partitioning_generator_function(resource, layer, schedule, verbose=
     #loop_blocking_list and loop_partitioning_list generator.
     
     num_level = resource.buffer_levels()
-    blocking_generator = blocking_generator_function(resource, layer, schedule.schedule_hint, verbose)
+    blocking_generator = blocking_generator_function(resource, layer, schedule, verbose)
 
     for loop_blocking in blocking_generator:
         #print "loop_blocking: ", loop_blocking
@@ -722,7 +725,7 @@ def dataflow_exploration(resource, layer, file_name, verbose=False):
     parallel_levels = resource.para_index 
  
     blocking_partitioning_generator = \
-        blocking_partitioning_generator_function(resource, layer)
+        blocking_partitioning_generator_function(resource, layer, None)
 
     #dummy_partitioning = [(1,) * num_levels] * le.NUM  
 

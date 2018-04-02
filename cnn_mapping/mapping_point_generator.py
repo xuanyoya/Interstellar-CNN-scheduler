@@ -753,10 +753,12 @@ def dataflow_exploration(resource, layer, file_name, verbose=False):
             if verbose:
                 print "unrolled loops: ", unrolled_loops, " with utilization ", utilization
                 #print "best loop order: ", best_mapping_point.loop_orders
+                print "blocking: ", blocking
+                print "partitioning: ", partitioning
                 print "Update smallest cost: ", dataflow_tb[unrolled_loops][0]
                 #print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
     #assert best_mapping_point, "No valid mapping point found."
-        pickle_file_name = file_name + ".pickle"
-        pickle.dump(dataflow_tb, open(pickle_file_name, "wb"))
+    pickle_file_name = file_name + ".pickle"
+    pickle.dump(dataflow_tb, open(pickle_file_name, "wb"))
     return dataflow_tb 
             

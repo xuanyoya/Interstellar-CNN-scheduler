@@ -4,11 +4,11 @@ import math
 import time
 import cnn_mapping as cm
 
-def basic_optimizer(arch_info, network_info, schedule_info, basic=False, verbose=False):    
+def basic_optimizer(arch_info, network_info, schedule_info=None, basic=False, verbose=False):    
 
     resource = cm.Resource.arch(arch_info) 
     layer = cm.Layer.layer(network_info)
-    schedule = cm.Schedule.schedule(schedule_info)
+    schedule = cm.Schedule.schedule(schedule_info) if schedule_info != None else None
     opt_result = cm.optimizer.opt_optimizer(resource, layer, schedule, verbose)
     
     level_costs = cm.cost_model.get_level_costs(resource, opt_result[1], layer, verbose)

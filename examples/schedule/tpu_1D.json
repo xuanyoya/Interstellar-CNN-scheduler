@@ -1,8 +1,10 @@
 {
-    "OC": {
-       "level0":{
-           "order":0,
-           "partitioning_size":16 
-       }
+    "schedule_hint": {
+        "OC": {
+           "level0":{
+               "order":0,
+               "partitioning_size":16 
+           }
+        }
     }
 }

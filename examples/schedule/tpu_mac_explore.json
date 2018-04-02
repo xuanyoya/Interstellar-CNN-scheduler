@@ -12,5 +12,6 @@
                "partitioning_size":16
            }
         }
-    }
+    },
+    "partition_loops": ["IC", "OC", "ON"]
 }

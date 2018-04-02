@@ -57,9 +57,12 @@ def extract_schedule_info(schedule_file, num_levels):
                 schedule_hint[le.loop_table[loop]][level_index][2] = hint[loop][level]["partitioning_size"]
 
     schedule["schedule_hint"] = schedule_hint
+
     if "partition_loops" not in data:
         schedule["partition_loops"] = None
+
     #TODO partition at dimension  
+    schedule["partition_loops"] = data["partition_loops"]
     return schedule
 
 

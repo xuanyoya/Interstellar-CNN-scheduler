@@ -45,7 +45,7 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
     print list(energy_list)
 
 
-def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False):
+def mac_explore_optimizer(arch_info, network_info, schedule_info, verbose=False):
     
     dataflow_res = []
     #TODO check the case when parallel count larger than layer dimension size

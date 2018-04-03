@@ -60,9 +60,10 @@ def extract_schedule_info(schedule_file, num_levels):
 
     if "partition_loops" not in data:
         schedule["partition_loops"] = None
+    else:
+        schedule["partition_loops"] = data["partition_loops"]
 
     #TODO partition at dimension  
-    schedule["partition_loops"] = data["partition_loops"]
     return schedule
 
 

@@ -9,10 +9,13 @@ class Schedule(object):
     def __init__(self, schedule_hint, partition_loops=None):
 
         self.schedule_hint = schedule_hint
-        self.partition_loops = []
-        for l in partition_loops:
-            self.partition_loops.append(le.loop_table[l])
-       
+        if partition_loops != None:
+            self.partition_loops = []
+            for l in partition_loops:
+                self.partition_loops.append(le.loop_table[l])
+        else:
+            self.partition_loops = partition_loops       
+
         num_levels = len(schedule_hint.values()[0])
         hint_para_index = {}
         for loop in schedule_hint:

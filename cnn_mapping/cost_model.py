@@ -623,6 +623,23 @@ def get_level_cost(resource, point, layer, level, verbose=False):
         print "Level ", level, " access: ", level_access 
     return level_cost
 
+
+def get_level_access(resource, point, layer, level, verbose=False):
+    layer_size = get_layer_size(layer)
+    mac_capacity = resource.mac_capacity
+
+    level_access = [get_if_access(level, point, layer, mac_capacity), \
+                    2 * get_of_access(level, point, layer, mac_capacity) - 1, \
+                    get_fl_access(level, point, layer, mac_capacity)] 
+
+    buffer_access = map(mul, level_access, layer_size)
+
+    if verbose >= 2:
+        print "Level ", level, " access: ", buffer_access 
+    return buffer_access
+
+
+
 def get_level_costs(resource, point, layer, verbose=False):
     num_levels = resource.buffer_levels()
     

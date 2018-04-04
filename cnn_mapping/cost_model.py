@@ -10,6 +10,15 @@ import math
 import loop_enum as le
 import buffer_enum as be
 
+
+def get_comp_cost(layer):
+    '''
+    Compute the computation cost, it is indepdent of other optimizations
+    '''
+    cost = layer.wofm * layer.hofm * layer.nifm * layer.nofm \
+           * layer.nimg * layer.wfil * layer.hfil 
+    return cost
+
 def get_layer_size(layer):
     '''
     Get size of ifmap, ofmap, filter of the layer 

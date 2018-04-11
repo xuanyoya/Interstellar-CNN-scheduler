@@ -623,6 +623,30 @@ def get_level_cost(resource, point, layer, level, verbose=False):
         print "Level ", level, " access: ", level_access 
     return level_cost
 
+
+def get_total_access(resource, point, layer, verbose=False):
+    layer_size = get_layer_size(layer)
+
+    access_list, array_cost  = get_access(point, layer, resource)
+
+    if verbose >= 2:
+        print "access breakdown: ", access_list 
+
+    total_level_access = []
+    for i in xrange(len(access_list)):
+        ''' List of total access of each buffer at level i'''
+        if not isinstance(access_list[i][0], list):
+            buffer_access = map(mul, access_list[i], layer_size)
+            total_level_access.append(sum(buffer_access))
+        else :
+            for j in xrange(len(access_list[i])):
+                buffer_access = map(mul, access_list[i][j], layer_size)
+                total_level_access.append(sum(buffer_access))
+
+    return total_level_access
+
+
+
 def get_level_costs(resource, point, layer, verbose=False):
     num_levels = resource.buffer_levels()
     

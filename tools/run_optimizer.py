@@ -80,7 +80,7 @@ if __name__ == "__main__":
     parser.add_argument("arch", help="architecture specification")
     parser.add_argument("network", help="network specification")
     parser.add_argument("-s", "--schedule", help="restriction of the schedule space")
-    parser.add_argument("-n", "--name", help="name for the dumped pickle file")
+    parser.add_argument("-n", "--name", default="dataflow_table", help="name for the dumped pickle file")
     parser.add_argument("-v", "--verbose", action='count', help="vebosity")
     args = parser.parse_args()
 

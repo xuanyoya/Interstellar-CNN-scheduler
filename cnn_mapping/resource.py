@@ -81,7 +81,7 @@ class Resource(object):
                 # count needs to be large than 1
                 assert partition_mode[i] == 0 or para_count_list <= 1 \
                        or (partition_mode[i] > 0 and para_count_list > 1)
-                if partition_mode[i] == 1 :
+                if partition_mode[i] == 1 or partition_mode[i] == 2:
                     array_access_costs[i] = array_access_cost[array_level]
                     array_level += 1
  

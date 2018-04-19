@@ -1,6 +1,10 @@
 # CNN-blocking
 Tool for optimize CNN blocking
 
+Descrived in the paper "A Systematic Approach to Blocking Convolutional Neural Networks (https://arxiv.org/abs/1606.04209")"
+
+By Xuan Yang, Jing Pu, Blaine Burton Rister, Nikhil Bhagdikar, Stephen Richardson, Shahar Kvatinsky, Jonathan Ragan-Kelley, Ardavan Pedram, Mark Horowitz
+
 usage: run_optimizer.py [-h] [-s SCHEDULE] [-v]
                         {basic,mem_explore, dataflow_explore} arch network
 

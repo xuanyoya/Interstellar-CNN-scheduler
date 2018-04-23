@@ -59,7 +59,8 @@ class Resource(object):
 
     def __init__(self, buf_capacity_list, buf_access_cost_list,
                  buf_unit_static_cost_list, para_count_list,  
-                 mac_capacity=1, partition_mode=None, array_access_cost=None, array_dim = None, utilization_threshold = 0.5):
+                 mac_capacity=1, partition_mode=None, array_access_cost=None, 
+                 array_dim = None, utilization_threshold = 0.5, replication=True):
 
         # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
@@ -99,12 +100,13 @@ class Resource(object):
         self.array_access_cost = array_access_cost
         self.para_count_list = para_count_list
         self.utilization_threshold = utilization_threshold
+        self.replication = replication
 
     @classmethod
     def arch(cls, info):
         return cls(info["capacity"], info["access_cost"], info["static_cost"],
                         info["parallel_count"], info["mac_capacity"], info["parallel_mode"],
-                        info["parallel_cost"], info["array_dim"], info["utilization_threshold"])  
+                        info["parallel_cost"], info["array_dim"], info["utilization_threshold"], info["replication"])  
 
     def buffer_levels(self):
         '''

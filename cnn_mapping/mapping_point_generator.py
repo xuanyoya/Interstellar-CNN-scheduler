@@ -27,11 +27,6 @@ def get_hinted_para(layer, level, hint):
     hinted_para = 1
     for loop in xrange(le.NUM):
         if loop in hint:
-            #if loop == le.OX:
-            #    hinted_loop_para = hint[loop][level][2] + layer.wstd - 1
-            #elif loop == le.OY:
-            #    hinted_loop_para = hint[loop][level][2] + layer.hstd - 1
-            #else:
             hinted_loop_para = hint[loop][level][2]
             hinted_para *= hinted_loop_para
 
@@ -227,16 +222,7 @@ def loop_tile(loop_extent, num_level, loop_hint=None):
         recursive_tile(tile_permutations, [], loop_extent, 0, num_level)   
     else:
         loop_tile_with_hint(tile_permutations, loop_extent, num_level, loop_hint)
-    '''
-    elif loop_hint[0][1] and loop_hint[0][2]:
-        #TODO hint not only at 1st level
-        blocking_factor = loop_hint[0][1] * loop_hint[0][2] 
-        new_loop_extent = (loop_extent + blocking_factor - 1 )//(blocking_factor)
-        recursive_tile(tile_permutations, [blocking_factor], 
-                              new_loop_extent, 1, num_level)
-    else:
-        loop_tile_with_para_hint(tile_permutations, loop_extent, num_level, loop_hint)
-    '''
+
     return tile_permutations
 
 def opt_valid_blocking(blocking_cache, resource, layer, blocking):
@@ -322,7 +308,24 @@ def current_level_recursive_partition_blocking_with_hint(para_permutation, slb, 
             cur_loop+1, cur_factor, para_count, hint, level, para_loops)    
 
 
-def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer, u_threshold):
+def current_level_partition_blocking_1d_no_replication(loop_tiles, slb, para_count, layer):
+
+    para_permutation = []
+    para_dim_permutation = []
+
+    for l0 in xrange(le.NUM):
+        for f0 in loop_tiles[l0]:
+            slp = [1,]*le.NUM
+            slp[l0] = f0
+            para_index = [l0]
+            if f0 <= para_count: # and 2*f0 > para_count:
+                para_permutation.append(slp)
+                para_dim_permutation.append([para_index])
+
+    return [para_permutation, para_dim_permutation]
+
+
+def current_level_partition_blocking_1d_replication(loop_tiles, slb, para_count, layer, u_threshold):
  
     para_permutation = []
     para_dim_permutation = []
@@ -350,6 +353,15 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer, u_th
                             para_dim_permutation.append([new_para_index])
 
     return [para_permutation, para_dim_permutation]
+
+
+def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer, u_threshold, replication):
+    if replication:
+        return current_level_partition_blocking_1d_replication(loop_tiles, slb, para_count, layer, u_threshold)
+    else: 
+        return current_level_partition_blocking_1d_no_replication(loop_tiles, slb, para_count, layer)
+     
+
 
 def current_level_partition_blocking_1d_with_hint(loop_tiles, slb, para_count, layer, level, cur_loop, schedule, u_threshold):
 
@@ -424,11 +436,12 @@ def current_level_partition_blocking_2d_with_hint(loop_tiles, slb, para_count, l
     
 
 
-def current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer, u_threshold):
+def current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer, u_threshold, replication):
     para_permutation = []
     para_dim_permutation = []
 
-    para_perm_1d, para_index_perm_1d = current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer, u_threshold)
+    para_perm_1d, para_index_perm_1d = current_level_partition_blocking_1d(loop_tiles, slb, para_count,\
+                                                                           layer, u_threshold, replication)
     para_index_generator = para_index_generator_function(para_index_perm_1d)
 
     for slps in itertools.combinations(para_perm_1d, 2):
@@ -442,7 +455,7 @@ def current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer, u_th
 
     return [para_permutation, para_dim_permutation]
    
-def current_level_partition_blocking(slb, para, layer, u_threshold):
+def current_level_partition_blocking(slb, para, layer, u_threshold, replication):
 
     para_count = para.array_width
     loop_tiles = []
@@ -451,9 +464,9 @@ def current_level_partition_blocking(slb, para, layer, u_threshold):
     
     #print "loop tile ", loop_tiles
     if para.array_dim == 1:
-        return current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer, u_threshold)
+        return current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer, u_threshold, replication)
     else: 
-        return current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer, u_threshold)
+        return current_level_partition_blocking_2d(loop_tiles, slb, para_count, layer, u_threshold, replication)
 
 def current_level_partition_blocking_with_hint(slb, para, layer, level, schedule, u_threshold):
     para_count = para.array_width
@@ -489,7 +502,7 @@ def parallel_blocking_generator_function(lp, resource, layer, schedule=None):
             para_count = para.array_width
             if schedule == None: 
                 #current_level_recursive_partition_blocking(para_permutation, lp[level], [], 0, para.count, para.count, layer, under_utilized) 
-                para_permutation, para_dim_permutation = current_level_partition_blocking(lp[level], para, layer, resource.utilization_threshold)
+                para_permutation, para_dim_permutation = current_level_partition_blocking(lp[level], para, layer, resource.utilization_threshold, resource.replication)
                 para_permutations.append(para_permutation)
                 para_dim_permutations.append(para_dim_permutation)
             else:
@@ -514,36 +527,8 @@ def parallel_blocking_generator_function(lp, resource, layer, schedule=None):
         para_dim = para_dim_generator.next()
         #print partition, para_dim
         yield [partition, para_dim]
-'''
-def blocking_partitioning_generator_function_with_hint(resource, layer, hint, verbose=False):
-    
-    #loop_blocking_list and loop_partitioning_list generator.
-    assert hint    
-    num_level = resource.buffer_levels()
-    blocking_generator = blocking_generator_function(resource, layer, hint, verbose)
-    
-    for loop_blocking in blocking_generator:
-        #print "loop_blocking: ", loop_blocking
-        
-        loop_blocking_reshape = zip(*loop_blocking)
-        pb_generator = parallel_blocking_generator_function(loop_blocking_reshape, resource, layer, hint)
-        
-        for pi in pb_generator:
-            partition, para_dim = pi
-            partitioned_loop_blocking_reshape = []
-            for level in xrange(num_level):
-                partitioned_loop_blocking_reshape.append([ (x+y-1) // y 
-                    for x, y in zip(loop_blocking_reshape[level], partition[level])])   #TODO check if using two maps with floordiv is faster 
-            blocking_list = zip(*partitioned_loop_blocking_reshape)
-            partitioning_list = zip(*partition)
-            
-            dummy_mapping_point = MappingPoint(None, blocking_list, partitioning_list, para_dim)
-            print partitioning_list, para_dim
-            if cost_model.valid_partitioning(resource, dummy_mapping_point, layer, verbose):
-            #if cost_model.valid_mapping_point(resource, dummy_mapping_point, layer, verbose):
-                yield [blocking_list, partitioning_list, para_dim]
- 
-'''
+
+
 def blocking_partitioning_generator_function(resource, layer, schedule, verbose=False):
     
     #loop_blocking_list and loop_partitioning_list generator.
@@ -746,7 +731,7 @@ def dataflow_exploration(resource, layer, file_name, verbose=False):
         #print "partitioning: ", partitioning
         unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels, para_dim)
         utilization = get_utilization(utilized, resource)
-        if utilization < resource.utilization_threshold:
+        if resource.replication and utilization < resource.utilization_threshold:
             continue
         cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)
         if unrolled_loops not in dataflow_tb or dataflow_tb[unrolled_loops][0] > cost:

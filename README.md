@@ -24,35 +24,25 @@ optional arguments:
 
 # Examples
 ## To optimize loop blocking.
-Dataflow: Eyeriss
+Dataflow: C | K
 
 Memory Architecture: 3 level
 
-Network: AlexNet Conv2 Batch16
+Network: AlexNet Conv3 Batch16
 
 ```
-python ./tools/run_optimizer.py -v -s ./examples/schedule/eyeriss_alex_conv2.json basic ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv2_batch16.json 
-```
-
-Dataflow: TPU
-
-Memory Architecture: 3 level
-
-Network: AlexNet Conv2 Batch16
-
-```
-python ./tools/run_optimizer.py -v -s ./examples/schedule/tpu.json basic ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv2_batch16.json
+python ./tools/run_optimizer.py basic ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json -s ./examples/schedule/dataflow_C_K.json -v 
 ```
 
 ## To optimize memory capacity.
-Dataflow: Eyeriss
+Dataflow: C | K
 
 Memory Architecture: 3 level
 
-Network: AlexNet Conv2 Batch16
+Network: AlexNet Conv3 Batch16
 
 ```
-python ./tools/run_optimizer.py -v -s ./examples/schedule/eyeriss_alex_conv2.json mem_explore ./examples/arch/3_level_mem_explore.json ./examples/network/alex_conv2_batch16.json
+python ./tools/run_optimizer.py mem_explore ./examples/arch/3_level_mem_explore.json ./examples/network/alex_conv3_batch16.json -s ./examples/schedule/eyeriss_alex_conv3.json -v 
 ```
 
 ## To explore dataflow.
@@ -60,14 +50,14 @@ Dataflow: All
 
 Memory Architecture: Eyeriss
 
-Network: AlexNet Conv2 Batch16
+Network: AlexNet Conv3 Batch16
 
 ```
-python ./tools/run_optimizer.py -v dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv2_batch16.json
+python ./tools/run_optimizer.py dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json -v
 ```
 
 or:
 
 ```
-python ./tools/run_optimizer.py -v -n user_defined_pickle_filename dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json
+python ./tools/run_optimizer.py dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json -n user_defined_pickle_filename -v
 ```

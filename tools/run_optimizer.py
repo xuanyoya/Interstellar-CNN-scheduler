@@ -53,7 +53,7 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
             i += 1
 
     print list(energy_list)
-    print min(energy_list)
+    print "optiaml energy for all memory systems: ", np.min(np.array(energy_list))
 
 def mac_explore_optimizer(arch_info, network_info, schedule_info, verbose=False):
     

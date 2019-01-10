@@ -343,11 +343,7 @@ def current_level_partition_blocking_1d_replication(loop_tiles, slb, para_count,
                     if l1 == l0:
                         continue 
                     for f1 in loop_tiles[l1]:
-<<<<<<< HEAD
-                        if 1.34*f1*f0 > para_count and f1*f0 <= para_count:
-=======
                         if f1*f0 >= para_count*u_threshold and f1*f0 <= para_count:
->>>>>>> 6d4af046d18f0e838964d3f9ff4c33054741596f
                             new_slp = copy.copy(slp) 
                             new_slp[l1] = f1  
                             para_permutation.append(new_slp)

@@ -299,6 +299,9 @@ def get_array_access_and_cost(level, para, access_list, point):
     lower level of memory hierachy
     '''
 
+    para_mode = para.access_mode
+    assert para_mode == 1 or para_mode == 2
+
     array_dim = para.array_dim
     para_count = para.array_width
     para_cost = para.array_access_cost * 1.0
@@ -311,41 +314,61 @@ def get_array_access_and_cost(level, para, access_list, point):
     partitions_nearest = [1,]*le.NUM
     partitions_far = []
     across_block_cost = [0]*array_dim
-    for i in xrange(len(para_dim)):
-        para_index = para_dim[i]
-        partitions_far.append([1,]*le.NUM)
-        if len(para_index) == 1:
-            partitions_nearest[para_index[0]] = partitions[para_index[0]]
-        else:
-            inner_loop, outer_loop = para_index  
-            partitions_nearest[inner_loop] = partitions[inner_loop] 
-            partitions_far[i][outer_loop] = partitions[outer_loop]
-            across_block_cost[i] = para_cost * partitions[inner_loop] 
+   
+    if para_mode == 1:
+        for i in xrange(len(para_dim)):
+            para_index = para_dim[i]
+            partitions_far.append([1,]*le.NUM)
+            if len(para_index) == 1:
+                partitions_nearest[para_index[0]] = partitions[para_index[0]]
+            else:
+                inner_loop, outer_loop = para_index  
+                partitions_nearest[inner_loop] = partitions[inner_loop] 
+                partitions_far[i][outer_loop] = partitions[outer_loop]
+                across_block_cost[i] = para_cost * partitions[inner_loop] 
+    
+        array_if_block_access_nearest = if_block_access  * partitions_nearest[le.FX] * \
+                                partitions_nearest[le.FY] * partitions_nearest[le.OC]
+        array_of_block_access_nearest = of_block_access  * partitions_nearest[le.FX] * \
+                                partitions_nearest[le.FY] * partitions_nearest[le.IC]
+        array_fl_block_access_nearest = fl_block_access  * partitions_nearest[le.OX] * \
+                                partitions_nearest[le.OY] * partitions_nearest[le.ON]
+    
+        array_access = [[array_if_block_access_nearest, array_of_block_access_nearest, array_fl_block_access_nearest]]
+    
+        for i in xrange(array_dim):
+            if_partitions_far = partitions_far[i][le.FX] * partitions_far[i][le.FY] * partitions_far[i][le.OC]
+            if_partitions_far = if_partitions_far if if_partitions_far != 1 else 0   
+            of_partitions_far = partitions_far[i][le.FX] * partitions_far[i][le.FY] * partitions_far[i][le.IC]
+            of_partitions_far = of_partitions_far if of_partitions_far != 1 else 0   
+            fl_partitions_far = partitions_far[i][le.OX] * partitions_far[i][le.OY] * partitions_far[i][le.ON]
+            fl_partitions_far = fl_partitions_far if fl_partitions_far != 1 else 0   
+             
+            if_array_block_access = if_block_access * if_partitions_far
+            of_array_block_access = of_block_access * of_partitions_far
+            fl_array_block_access = fl_block_access * fl_partitions_far
+            
+            array_access.append([if_array_block_access, of_array_block_access, fl_array_block_access])
+    
+        return [array_access, [nearest_pe_cost] + across_block_cost]
 
-    array_if_block_access_nearest = if_block_access  * partitions_nearest[le.FX] * \
-                            partitions_nearest[le.FY] * partitions_nearest[le.OC]
-    array_of_block_access_nearest = of_block_access  * partitions_nearest[le.FX] * \
-                            partitions_nearest[le.FY] * partitions_nearest[le.IC]
-    array_fl_block_access_nearest = fl_block_access  * partitions_nearest[le.OX] * \
-                            partitions_nearest[le.OY] * partitions_nearest[le.ON]
+    elif para_mode == 2:
+        for i in xrange(len(para_dim)):
+            para_index = para_dim[i]
+            for j in para_index:
+                partitions_nearest[j] = partitions[j]
+    
+        array_if_block_access_nearest = if_block_access  * partitions_nearest[le.FX] * \
+                                partitions_nearest[le.FY] * partitions_nearest[le.OC]
+        array_of_block_access_nearest = of_block_access  * partitions_nearest[le.FX] * \
+                                partitions_nearest[le.FY] * partitions_nearest[le.IC]
+        array_fl_block_access_nearest = fl_block_access  * partitions_nearest[le.OX] * \
+                                partitions_nearest[le.OY] * partitions_nearest[le.ON]
+    
+        array_access = [[array_if_block_access_nearest, array_of_block_access_nearest, array_fl_block_access_nearest]]
+    
+        return [array_access, [nearest_pe_cost]]
 
-    array_access = [[array_if_block_access_nearest, array_of_block_access_nearest, array_fl_block_access_nearest]]
-
-    for i in xrange(array_dim):
-        if_partitions_far = partitions_far[i][le.FX] * partitions_far[i][le.FY] * partitions_far[i][le.OC]
-        if_partitions_far = if_partitions_far if if_partitions_far != 1 else 0   
-        of_partitions_far = partitions_far[i][le.FX] * partitions_far[i][le.FY] * partitions_far[i][le.IC]
-        of_partitions_far = of_partitions_far if of_partitions_far != 1 else 0   
-        fl_partitions_far = partitions_far[i][le.OX] * partitions_far[i][le.OY] * partitions_far[i][le.ON]
-        fl_partitions_far = fl_partitions_far if fl_partitions_far != 1 else 0   
-         
-        if_array_block_access = if_block_access * if_partitions_far
-        of_array_block_access = of_block_access * of_partitions_far
-        fl_array_block_access = fl_block_access * fl_partitions_far
-        
-        array_access.append([if_array_block_access, of_array_block_access, fl_array_block_access])
-
-    return [array_access, [nearest_pe_cost] + across_block_cost]
 
 
 def get_access(point, layer, resource):
@@ -577,7 +600,7 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
     level_access, level_cost = get_array_access_and_cost(level, resource.paras[level], next_level_access, point) 
 
     total_cost = 0
-    for i in xrange(resource.paras[level].array_dim+1):
+    for i in xrange(len(level_access)):
         buffer_access = map(mul, level_access[i], layer_size)
         total_cost += sum(buffer_access) *level_cost[i]
 

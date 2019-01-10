@@ -59,7 +59,8 @@ class Resource(object):
 
     def __init__(self, buf_capacity_list, buf_access_cost_list,
                  buf_unit_static_cost_list, para_count_list,  
-                 mac_capacity=1, partition_mode=None, array_access_cost=None, array_dim = None):
+                 mac_capacity=1, partition_mode=None, array_access_cost=None, 
+                 array_dim = None, utilization_threshold = 0.5, replication=True):
 
         # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
@@ -81,7 +82,7 @@ class Resource(object):
                 # count needs to be large than 1
                 assert partition_mode[i] == 0 or para_count_list <= 1 \
                        or (partition_mode[i] > 0 and para_count_list > 1)
-                if partition_mode[i] == 1 :
+                if partition_mode[i] == 1 or partition_mode[i] == 2:
                     array_access_costs[i] = array_access_cost[array_level]
                     array_level += 1
  
@@ -98,13 +99,14 @@ class Resource(object):
         self.mac_capacity = mac_capacity
         self.array_access_cost = array_access_cost
         self.para_count_list = para_count_list
-
+        self.utilization_threshold = utilization_threshold
+        self.replication = replication
 
     @classmethod
     def arch(cls, info):
         return cls(info["capacity"], info["access_cost"], info["static_cost"],
                         info["parallel_count"], info["mac_capacity"], info["parallel_mode"],
-                        info["parallel_cost"], info["array_dim"])  
+                        info["parallel_cost"], info["array_dim"], info["utilization_threshold"], info["replication"])  
 
     def buffer_levels(self):
         '''

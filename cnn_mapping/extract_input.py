@@ -23,6 +23,11 @@ def extract_arch_info(arch_file):
     #    data["partition_loops"] = None
     if "array_dim" not in data:
         data["array_dim"] = None
+    if "utilization_threshold" not in data:
+        data["utilization_threshold"] = 0.5
+    if "replication" not in data:
+        data["replication"] = True
+   
     return data
 
 def extract_network_info(network_file):

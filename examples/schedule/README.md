@@ -10,7 +10,7 @@ The format of the schedule.json file is as below:
          }
 
     },
-    "partition_loops": "["loop_name1", "loop_name2", ...] (the loops are allowed to replicat/unrolle to improve utilization)"
+    "partition_loops": "["loop_name1", "loop_name2", ...] (the loops are allowed to be replicated/unrolled to improve utilization)"
 
 }
 ```

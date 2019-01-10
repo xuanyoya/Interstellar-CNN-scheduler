@@ -10,7 +10,7 @@ positional arguments:
 
   arch                  architecture specification
 
-  network               network specification
+  layer                 layer specification
 
 optional arguments:
 
@@ -31,7 +31,7 @@ Memory Architecture: 3 level
 Network: AlexNet Conv3 Batch16
 
 ```
-python ./tools/run_optimizer.py basic ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json -s ./examples/schedule/dataflow_C_K.json -v 
+python ./tools/run_optimizer.py basic ./examples/arch/3_level_mem_baseline_asic.json ./examples/layer/alex_conv3_batch16.json -s ./examples/schedule/dataflow_C_K.json -v 
 ```
 
 ## To optimize memory capacity.
@@ -42,7 +42,7 @@ Memory Architecture: 3 level
 Network: AlexNet Conv3 Batch16
 
 ```
-python ./tools/run_optimizer.py mem_explore ./examples/arch/3_level_mem_explore.json ./examples/network/alex_conv3_batch16.json -s ./examples/schedule/eyeriss_alex_conv3.json -v 
+python ./tools/run_optimizer.py mem_explore ./examples/arch/3_level_mem_explore.json ./examples/layer/alex_conv3_batch16.json -s ./examples/schedule/eyeriss_alex_conv3.json -v 
 ```
 
 ## To explore dataflow.
@@ -53,11 +53,11 @@ Memory Architecture: Eyeriss
 Network: AlexNet Conv3 Batch16
 
 ```
-python ./tools/run_optimizer.py dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json -v
+python ./tools/run_optimizer.py dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/layer/alex_conv3_batch16.json -v
 ```
 
 or:
 
 ```
-python ./tools/run_optimizer.py dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/network/alex_conv3_batch16.json -n user_defined_pickle_filename -v
+python ./tools/run_optimizer.py dataflow_explore ./examples/arch/3_level_mem_baseline_asic.json ./examples/layer/alex_conv3_batch16.json -n user_defined_pickle_filename -v
 ```

@@ -20,7 +20,6 @@ def opt_optimizer(resource, layer, hint=None, verbose=False):
     if verbose:
         print smallest_cost
         print "Best mapping_point: ", best_mapping_point.loop_blockings, best_mapping_point.loop_partitionings, best_mapping_point.loop_orders
-
     return [smallest_cost, best_mapping_point]
  
 def optimizer(resource, layer, hint=None, verbose=False):

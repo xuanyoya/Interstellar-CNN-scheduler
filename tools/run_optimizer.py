@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import argparse
 import math
@@ -24,26 +25,35 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
     assert "explore_points" in arch_info, "missing explore_points in arch file" 
     assert "capacity_scale" in arch_info, "missing capacity_scale in arch file" 
     assert "access_cost_scale" in arch_info, "missing access_cost_scale in arch file" 
-
+    cwd = os.getcwd()
+    output_filename = os.path.join(cwd, "dataset", network_info['layer_name'] + '_128.csv')
     explore_points = arch_info["explore_points"]
     energy_list = np.zeros(tuple(explore_points))
+    summary_array = np.zeros([np.product(explore_points), 12])
     #TODO support more than two levels of explorations
     capacity0 = arch_info["capacity"][0]
     capacity1 = arch_info["capacity"][1]
     cost0 = arch_info["access_cost"][0]
     cost1 = arch_info["access_cost"][1]
+    i = 0
     for x in xrange(explore_points[0]):
         arch_info["capacity"][0] = capacity0 * (arch_info["capacity_scale"][0]**x)
         arch_info["access_cost"][0] = cost0 * (arch_info["access_cost_scale"][0]**x)
         for y in xrange(explore_points[1]):
+            #if x == 0 and y < 1:
+            #    continue
             arch_info["capacity"][1] = capacity1 * (arch_info["capacity_scale"][1]**y)
             arch_info["access_cost"][1] = cost1 * (arch_info["access_cost_scale"][1]**y)
             print arch_info
             energy = basic_optimizer(arch_info, network_info, schedule_info, False, verbose)
             energy_list[x][y] = energy
+            cur_point = network_info["layer_info"] + arch_info["capacity"][:-1] + [energy]
+            summary_array[i] = cur_point
+            np.savetxt(output_filename, summary_array, delimiter=",")
+            i += 1
 
     print list(energy_list)
-
+    print min(energy_list)
 
 def mac_explore_optimizer(arch_info, network_info, schedule_info, verbose=False):
     

@@ -537,6 +537,7 @@ def valid_blocking_size_current_level(resource, point, layer, level, verbose=Fal
         return True
     return fit_in_level(resource.buffer(level).capacity * resource.paras[level].count, 
         get_block_size(point, layer, level), (level not in resource.para_index))
+        #get_block_size(point, layer, level), (level > min(resource.para_index)))
 
 
 def valid_blocking_size(resource, point, layer, verbose=False):

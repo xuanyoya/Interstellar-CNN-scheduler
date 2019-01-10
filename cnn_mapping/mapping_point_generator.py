@@ -332,7 +332,7 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer):
             slp = [1,]*le.NUM
             slp[l0] = f0
             para_index = [l0]
-            if f0 <= para_count and 2*f0 > para_count:
+            if f0 <= para_count and 1.34*f0 > para_count:
                 para_permutation.append(slp)
                 para_dim_permutation.append([para_index])
             else:
@@ -340,7 +340,7 @@ def current_level_partition_blocking_1d(loop_tiles, slb, para_count, layer):
                     if l1 == l0:
                         continue 
                     for f1 in loop_tiles[l1]:
-                        if 2*f1*f0 > para_count and f1*f0 <= para_count:
+                        if 1.34*f1*f0 > para_count and f1*f0 <= para_count:
                             new_slp = copy.copy(slp) 
                             new_slp[l1] = f1  
                             para_permutation.append(new_slp)
@@ -618,7 +618,6 @@ def opt_mapping_point_generator_function(resource, layer, schedule=None, verbose
 
     Generates a new mapping point each iteration.
     '''
-
     num_levels = resource.buffer_levels()
     blocking_partitioning_generator = \
         blocking_partitioning_generator_function(resource, layer, schedule)
@@ -746,6 +745,8 @@ def dataflow_exploration(resource, layer, file_name, verbose=False):
         #print "partitioning: ", partitioning
         unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels, para_dim)
         utilization = get_utilization(utilized, resource)
+        if utilization < 0.75:
+            continue
         cost, loop_order = opt_get_best_loop_order(resource, layer, dummy_mapping_point, verbose)
         if unrolled_loops not in dataflow_tb or dataflow_tb[unrolled_loops][0] > cost:
             best_mapping_point = MappingPoint(loop_order, blocking, partitioning, para_dim)

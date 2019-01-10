@@ -1,4 +1,5 @@
 import json
+import os
 import loop_enum as le
 
 def extract_arch_info(arch_file):
@@ -34,6 +35,10 @@ def extract_network_info(network_file):
         data["stride_width"] = 1
     if "stride_height" not in data:
         data["stride_height"] = 1
+   
+    layer_summary = data.values()
+    data['layer_info'] = layer_summary
+    data['layer_name'] = os.path.splitext(os.path.basename(network_file))[0]
 
     return data
 

@@ -24,7 +24,7 @@ def extract_arch_info(arch_file):
     if "array_dim" not in data:
         data["array_dim"] = None
     if "utilization_threshold" not in data:
-        data["utilization_threshold"] = 0.5
+        data["utilization_threshold"] = 0.75
     if "replication" not in data:
         data["replication"] = True
    

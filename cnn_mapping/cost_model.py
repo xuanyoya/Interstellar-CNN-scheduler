@@ -19,6 +19,18 @@ def get_comp_cost(layer):
            * layer.nimg * layer.wfil * layer.hfil 
     return cost
 
+
+def get_ideal_performance(layer, resource):
+    '''
+    Compute the ideal runtime in cycles, assuming overhead of data fetching
+    '''
+    total_comp = get_comp_cost(layer)
+    number_pe = reduce(mul, resource.para_count_list, 1)
+    runtime = math.ceil(total_comp *1.0 / number_pe)
+
+    return runtime
+
+
 def get_layer_size(layer):
     '''
     Get size of ifmap, ofmap, filter of the layer 
@@ -30,6 +42,28 @@ def get_layer_size(layer):
  
     return [ifmap_size, ofmap_size, flmap_size]
 
+
+def get_hinted_para(level, hint):
+    assert hint    
+
+    hinted_para = 1
+    for loop in xrange(le.NUM):
+        if loop in hint:
+            hinted_loop_para = hint[loop][level][2]
+            hinted_para *= hinted_loop_para
+
+    return hinted_para
+
+
+def valid_dataflow(resource, hint):
+    num_levels = resource.buffer_levels()    
+
+    for level in xrange(num_levels):
+        if resource.paras[level].count != 1 and \
+            get_hinted_para(level, hint) < (resource.paras[level].count * resource.utilization_threshold):
+            return False
+
+    return True
 
 def get_if_access(level, point, layer, mac_capacity = 1):
     '''

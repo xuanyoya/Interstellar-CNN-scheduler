@@ -21,17 +21,6 @@ import loop_enum as le
 import buffer_enum as be
 import utils
 
-def get_hinted_para(layer, level, hint):
-    assert hint    
-
-    hinted_para = 1
-    for loop in xrange(le.NUM):
-        if loop in hint:
-            hinted_loop_para = hint[loop][level][2]
-            hinted_para *= hinted_loop_para
-
-    return hinted_para
-
 def get_hinted_partitioning(level, hint):
     hinted_partitioning = []
     hinted_para_dim = []
@@ -506,7 +495,7 @@ def parallel_blocking_generator_function(lp, resource, layer, schedule=None):
                 para_permutations.append(para_permutation)
                 para_dim_permutations.append(para_dim_permutation)
             else:
-                hinted_para = get_hinted_para(layer, level, schedule.schedule_hint)
+                hinted_para = cost_model.get_hinted_para(level, schedule.schedule_hint)
                 assert hinted_para <= para.count, "total parallelism in schedule hint exceeds the maximum parallelism"
                 if  para.count >= hinted_para * 2 :
                     new_para_count = para.count/hinted_para
@@ -604,6 +593,9 @@ def opt_mapping_point_generator_function(resource, layer, schedule=None, verbose
     Generates a new mapping point each iteration.
     '''
     num_levels = resource.buffer_levels()
+    parallel_levels = resource.para_index 
+    ideal_perf = cost_model.get_ideal_performance(layer, resource)
+
     blocking_partitioning_generator = \
         blocking_partitioning_generator_function(resource, layer, schedule)
 
@@ -628,9 +620,13 @@ def opt_mapping_point_generator_function(resource, layer, schedule=None, verbose
         if cost < smallest_cost:
             smallest_cost = cost
             best_mapping_point = MappingPoint(loop_order, blocking, partitioning, para_dim)
+            unrolled_loops, utilized = partitioned_loop_string(partitioning, parallel_levels, para_dim)
+            utilization = get_utilization(utilized, resource)
+            perf = utilization * ideal_perf
             if verbose:
                 print "best loop order: ", best_mapping_point.loop_orders
-                print "Update smallest cost: ", smallest_cost
+                print "runtime (cycles): ", perf, "utilization: ", utilization
+                print "Update smallest cost (pJ): ", smallest_cost
                 print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
     assert best_mapping_point, "No valid mapping point found."
     return smallest_cost, best_mapping_point
@@ -741,7 +737,7 @@ def dataflow_exploration(resource, layer, file_name, verbose=False):
                 #print "best loop order: ", best_mapping_point.loop_orders
                 print "blocking: ", blocking
                 print "partitioning: ", partitioning
-                print "Update smallest cost: ", dataflow_tb[unrolled_loops][0]
+                print "Update smallest cost (pJ): ", dataflow_tb[unrolled_loops][0]
                 #print "Update best shedule: ", utils.print_loop_nest(best_mapping_point)
     #assert best_mapping_point, "No valid mapping point found."
     pickle_file_name = file_name + ".pickle"

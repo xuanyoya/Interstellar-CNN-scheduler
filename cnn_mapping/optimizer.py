@@ -12,6 +12,9 @@ def opt_optimizer(resource, layer, hint=None, verbose=False):
     Evaluate the cost of each mapping point,
     record the mapping_point with the smallest cost
     '''
+    if hint is not None and hint.partition_loops is None:
+        valid = cost_model.valid_dataflow(resource, hint.schedule_hint)
+    assert valid == True, "Specified schedule doesn't satisfy the utilization threshold, please check partitioning_size"
 
     smallest_cost, best_mapping_point = mapping_point_generator.opt_mapping_point_generator_function(resource, layer, hint, verbose)
     total_cost = cost_model.get_cost(resource, best_mapping_point, layer, verbose)

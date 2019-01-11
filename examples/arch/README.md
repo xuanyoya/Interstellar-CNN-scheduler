@@ -1,4 +1,4 @@
-The format of the arch.json file is as below:
+The format of the arch.json file to perform blocking search is as below:
 ```
 {
     "mem_levels": "number of memory levels",
@@ -6,13 +6,13 @@ The format of the arch.json file is as below:
     "access_cost": "[1st level per access cost, 2nd level per access cost, ...]",
     "parallel_count": "[1st level parallel factor, 2nd level parallel factor, ...]",
     "parallel_cost": "communication cost among adjacent parallel units (PEs)",
-    "precision": "number of bits"
+    "precision": "number of bits",
     "utilization_threshold": "only consider the designs that achieve utilization ratio larger than this threshold, default 0.75",
     "replication": "whether allow replication, default true"  
 }
 ```
 
-or
+To perform memory search, the format is as below
 
 ```
 {
@@ -21,12 +21,12 @@ or
     "access_cost": "[1st level per access cost, 2nd level per access cost, ...]",
     "parallel_count": "[1st level parallel factor, 2nd level parallel factor, ...]",
     "parallel_cost": "communication cost among adjacent parallel units (PEs)",
-    "precision": "number of bits"
+    "precision": "number of bits",
     "utilization_threshold": "only consider the designs that achieve utilization ratio larger than this threshold, default 0.75",
-    "replication": "whether allow replication, default true"  
+    "replication": "whether allow replication, default true" , 
     "capacity_scale":[cs1, cs2],
     "access_cost_scale":[2, 1.5],
-    "explore_points":[count1, count2],
+    "explore_points":[count1, count2]
 }
 ```
 

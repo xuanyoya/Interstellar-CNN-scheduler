@@ -2,6 +2,7 @@ import json
 import os
 import loop_enum as le
 
+
 def extract_arch_info(arch_file):
     with open(arch_file) as json_data_file:
         data = json.load(json_data_file)
@@ -11,23 +12,34 @@ def extract_arch_info(arch_file):
         "access_cost list is invalid, too many or too few elements"
     assert data["mem_levels"] == len(data["parallel_count"]), \
         "parallel_count list is invalid, too many or too few elements"
-    assert data["mem_levels"] == len(data["static_cost"]), \
-        "static_cost list is invalid, too many or too few elements"
-    assert data["mem_levels"] == len(data["parallel_mode"]), \
-        "parallel_mode list is invalid, too many or too few elements"
 
-    num_bytes = data["precision"]/8
-    capacity_list =  [x/num_bytes for x in data["capacity"]]
+    num_bytes = data["precision"] / 8
+    capacity_list = [x / num_bytes for x in data["capacity"]]
     data["capacity"] = capacity_list
-    #if "partition_loops" not in data:
-    #    data["partition_loops"] = None
+    if "static_cost" not in data:
+        data["static_cost"] = [0, ] * data["mem_levels"]
+    else:
+        assert data["mem_levels"] == len(data["static_cost"]), \
+            "static_cost list is invalid, too many or too few elements"
+
+    if "mac_capacity" not in data:
+        data["mac_capacity"] = 0
+    if "parallel_mode" not in data:
+        data["parallel_mode"] = [0, ] * data["mem_levels"]
+        for level in xrange(data["mem_levels"]):
+            if data["parallel_count"][level] != 1:
+                data["parallel_mode"][level] = 1
+    else:
+        assert data["mem_levels"] == len(data["parallel_mode"]), \
+            "parallel_mode list is invalid, too many or too few elements"
+
     if "array_dim" not in data:
         data["array_dim"] = None
     if "utilization_threshold" not in data:
         data["utilization_threshold"] = 0.75
     if "replication" not in data:
         data["replication"] = True
-   
+
     return data
 
 def extract_network_info(network_file):

@@ -13,9 +13,10 @@ import buffer_enum as be
 
 def get_comp_cost(layer):
     '''
-    Compute the computation cost, it is independent of other optimizations
+    Compute the total # of MAC computation, it is independent of other optimizations
 
-    For now assume input/filter stride = 1 both
+    Also it is independent of input size and input/filter stride
+    Total # of computation = OX*OY*IC*OC*ON*FX*FY
     '''
     cost = layer.wofm * layer.hofm * layer.nifm * layer.nofm \
            * layer.nimg * layer.wfil * layer.hfil
@@ -24,10 +25,11 @@ def get_comp_cost(layer):
 
 def get_ideal_performance(layer, resource):
     '''
-    Compute the ideal runtime in cycles, assuming overhead of data fetching
+    Compute the ideal runtime in cycles by assuming 100% PE array utilization
+    Ideal # of cycles = Total # of MAC computation / Total # of PEs
 
-    Need to be modified if later adding precision-scalable PE.
-    # of functional PE will change based on different precision modes.
+    #LMEI Need to be modified if later when adding precision-scalable PE.
+    # of functional PE will change depending on different precision modes.
     '''
     total_comp = get_comp_cost(layer)
     number_pe = reduce(mul, resource.para_count_list, 1)
@@ -40,8 +42,8 @@ def get_layer_size(layer):
     '''
     Get size of ifmap, ofmap, filter of the layer
 
-    ifmap_size should be able to calculate based on ofmap_size and input/filter stride
-    IX = IS*(OX-1) + FS*(Fx-1) + 1
+    #LMEI ifmap_size should be able to calculate based on ofmap_size and input stride(IS) /filter stride(FS)
+    IX = IS*(OX-1) + FS*(FX-1) + 1
     wifm = wistd*(wofm-1) + wfstd*(wfil-1) + 1
     '''
 
@@ -83,15 +85,10 @@ def valid_dataflow(resource, hint):
 
 def get_if_access(level, point, layer, mac_capacity = 1):
     '''
-    Get # access of if block at current level
+    Get per element # of access of Input at current level
 
-    The repeated access to ifmap is determined by the blocking factors and
-    parallelism counts of those loops other than ifmap-related loops outside of
-    this level.
-
-    At the same buffer level, if the other loops are outside of the innermost
-    loop of ifmap-related loops, their blocking factors and parallelism counts
-    at this level should also contribute to the number of accesses.
+    Not accurate because [FX, FY] is not totally irrelevant terms for ifmap..
+    #LMEI Need to be modified by using the concept of the dataset.
     '''
 
     if level == 0 and mac_capacity == 0:
@@ -120,14 +117,25 @@ def get_if_access(level, point, layer, mac_capacity = 1):
 
 def get_of_access(level, point, layer, mac_capacity = 1):
     '''
-    Get # access of of block at current level
-
-    See comments in routine for ifmap.
+    Get per element # of access of Output at current level
 
     For output:
     Relevant terms [OX, OY, OC, ON]
     irrelevant terms [FX, FY, IC]
 
+    Calculating rule:
+    At lowest mem level (directly talk to MAC), calculate per element access
+    by timing all irrelevant terms [FX, FY, IC] together
+
+    For the rest higher mem levels,
+    firstly, check if there is stationary possibility
+    (irrelevant loops for filter [FX, FY, IC] are at the innermost position of this level)
+    if there is, exclude the irrelevant loop(s) from the current level's # of per element access computing
+    because they have been taken into account in lower level's # of per element access computing
+
+    secondly, calculate the current level's # of per element access
+    by multiplying all the irrelevant terms from current level to the highest level
+    including both temporal unrolling part and spatial unrolling part (parallelism).
     '''
 
     if level == 0 and mac_capacity == 0 :
@@ -155,9 +163,7 @@ def get_of_access(level, point, layer, mac_capacity = 1):
 
 def get_fl_access(level, point, layer, mac_capacity = 1):
     '''
-    Get # access of fl block at current level
-
-    See comments in routine for ifmap.
+    Get per element # of access of Weight at current level
 
     For filter:
     Relevant terms [FX, FY, IC, OC]
@@ -171,7 +177,7 @@ def get_fl_access(level, point, layer, mac_capacity = 1):
     firstly, check if there is stationary possibility
     (irrelevant loops for filter [OX, OY, ON] are at the innermost position of this level)
     if there is, exclude the irrelevant loop(s) from the current level's # of per element access computing
-    because it have been taken into account in lower level's # of per element access computing
+    because they have been taken into account in lower level's # of per element access computing
 
     secondly, calculate the current level's # of per element access
     by multiplying all the irrelevant terms from current level to the highest level
@@ -293,7 +299,19 @@ def opt_get_fl_access(level, point, ba_arr, pa_arr):
 
 def get_if_size(blocking_accum_list, partitioning_accum_list, partitioning_list, layer):
     '''
-    Get size of if block at current level
+    Get size of if block at current level including both temporal and spatial loop part
+
+    blocking     -> temporal loop part
+    partitioning -> spatial  loop part
+
+    #LMEI to support filter stride(FS) later
+    right now, FS/wfstd = 1 in
+    IX = IS*(OX-1) + FS*(FX-1) + 1 or
+    wifm = wistd*(wofm-1) + wfstd*(wfil-1) + 1
+
+    #LMEI (new HW template) no need for Input Duplication when OC partitions
+     by letting one reg broadcast Input to a row of OC partitioned PE
+     and remove inner PE ifamp register
     '''
 
     fx_acc = blocking_accum_list[le.FX] * partitioning_accum_list[le.FX]
@@ -310,7 +328,11 @@ def get_if_size(blocking_accum_list, partitioning_accum_list, partitioning_list,
 
 def get_of_size(blocking_accum_list, partitioning_accum_list, partitioning_list):
     '''
-    Get size of of block at current level
+    Get size of of block at current level including both temporal and spatial loop part
+
+    #LMEI (new HW template) no need for Output Duplication when IC, FX or FY partitions
+     by letting output data from a row of IC, FX or FY partitioned PE add together
+     and remove inner PE ofamp register
     '''
 
     return blocking_accum_list[le.OX] * partitioning_accum_list[le.OX] * \
@@ -324,6 +346,10 @@ def get_of_size(blocking_accum_list, partitioning_accum_list, partitioning_list)
 def get_fl_size(blocking_accum_list, partitioning_accum_list, partitioning_list):
     '''
     Get size of fl block at current level
+
+    #LMEI (new HW template) no need for Weight Duplication when OX, OY or ON partitions
+     by letting one reg broadcast Weight to a row of OX, OY or ON partitioned PE
+     and remove inner PE weight register
     '''
 
     return blocking_accum_list[le.FX] * partitioning_accum_list[le.FX] * \
@@ -336,6 +362,13 @@ def get_fl_size(blocking_accum_list, partitioning_accum_list, partitioning_list)
 def get_if_bank_size(blocking_accum_list, layer):
     '''
     Get size of if block at current level
+
+    blocking -> temporal loop part
+
+    #LMEI to support filter stride(FS) later
+    right now, FS/wfstd = 1 in
+    IX = IS*(OX-1) + FS*(FX-1) + 1 or
+    wifm = wistd*(wofm-1) + wfstd*(wfil-1) + 1
     '''
 
     fx_acc = blocking_accum_list[le.FX]
@@ -351,6 +384,8 @@ def get_if_bank_size(blocking_accum_list, layer):
 def get_of_bank_size(blocking_accum_list):
     '''
     Get size of of block at current level
+
+    blocking -> temporal loop part
     '''
 
     return blocking_accum_list[le.OX] * blocking_accum_list[le.OY] * \
@@ -360,6 +395,8 @@ def get_of_bank_size(blocking_accum_list):
 def get_fl_bank_size(blocking_accum_list):
     '''
     Get size of fl block at current level
+
+    blocking -> temporal loop part
     '''
 
     return blocking_accum_list[le.FX] * blocking_accum_list[le.FY] * \
@@ -369,7 +406,7 @@ def get_fl_bank_size(blocking_accum_list):
 def get_array_access_and_cost(level, para, access_list, point):
     '''
     Get the access at array level from the access at the
-    lower level of memory hierachy
+    lower level of memory hierarchy
     '''
 
     para_mode = para.access_mode
@@ -666,7 +703,8 @@ def get_total_access_cost(resource, array_cost):
     return total_access_cost
 
 def get_array_level_cost(resource, point, layer_size, level, next_level_access, verbose=False):
-    #TODO add support for other access_mode
+    # TODO add support for other access_mode
+    # LMEI to distinguish O (partial sum) in buffer_access from A and W
 
     assert resource.paras[level].count and resource.paras[level].access_mode
 
@@ -684,6 +722,8 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
 
 
 def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
+    # LMEI to distinguish O (partial sum) in buffer_access from A and W
+
     layer_size = get_layer_size(layer)
     mac_capacity = resource.mac_capacity
 
@@ -706,6 +746,12 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
 
 
 def get_level_cost(resource, point, layer, level, verbose=False):
+    '''
+    Get the energy from certain level of memory access
+
+    #LMEI to distinguish O (partial sum) in buffer_access from A and W
+    '''
+
     layer_size = get_layer_size(layer)
     mac_capacity = resource.mac_capacity
 

@@ -26,7 +26,7 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
     assert "capacity_scale" in arch_info, "missing capacity_scale in arch file" 
     assert "access_cost_scale" in arch_info, "missing access_cost_scale in arch file" 
     cwd = os.getcwd()
-    output_filename = os.path.join(cwd, "dataset", network_info['layer_name'] + '_128.csv')
+#    output_filename = os.path.join(cwd, "dataset", network_info['layer_name'] + '_128.csv')
     explore_points = arch_info["explore_points"]
     energy_list = np.zeros(tuple(explore_points))
     summary_array = np.zeros([np.product(explore_points), 12])
@@ -49,7 +49,7 @@ def mem_explore_optimizer(arch_info, network_info, schedule_info, verbose=False)
             energy_list[x][y] = energy
             cur_point = network_info["layer_info"] + arch_info["capacity"][:-1] + [energy]
             summary_array[i] = cur_point
-            np.savetxt(output_filename, summary_array, delimiter=",")
+#            np.savetxt(output_filename, summary_array, delimiter=",")
             i += 1
 
     print list(energy_list)

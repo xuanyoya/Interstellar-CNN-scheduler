@@ -591,7 +591,7 @@ def opt_get_best_loop_order(resource, layer, point, verbose=False):
                 best_curr_level_order = curr_level_order 
                 smallest_cost = curr_cost
             if resource.mac_capacity == 0 and level == 0:
-                break
+                break # Here the author thinks the loop order in innermost level doesn't matter, thus break
         best_loop_order.append(best_curr_level_order)
         best_cost += smallest_cost
 

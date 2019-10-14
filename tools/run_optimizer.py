@@ -103,5 +103,5 @@ if __name__ == "__main__":
     elif args.type == "dataflow_explore":
         dataflow_explore_optimizer(arch_info, network_info, args.name, args.verbose)
     end = time.time()
-    print "elasped time: ", (end-start)
+    print "elapsed time: ", (end-start)
 

@@ -15,7 +15,7 @@ class Buffer(namedtuple('Buffer',
 
     Buffer attributes include capacity, access cost, unit static cost.
 
-    Capacity is for a single buffer (If current level has parallelsim, 
+    Capacity is for a single buffer (If current level has parallelism,
     then it is the capacity of the buffer bank inside each parallel 
     units); access cost is the cost per access; 
     unit static cost is the static cost per time unit.
@@ -34,7 +34,7 @@ class Parallelism(namedtuple('Parallelism',
     Count is the number of parallel units. 
 
     Access mode is the mode of access non-private data, 
-    for example, whether access neighborhood PE, or 
+    for example, whether access neighborhood PE, or
     goes to next level buffer.
 
     Array access cost is the cost of accessing array level buffers.
@@ -53,8 +53,21 @@ class Resource(object):
     '''
     Hardware resource specification.
     Hardware resource includes buffer hierarchy and parallel processing units.
-    
-    mac_capacity[0, 1], determines whether MAC can buffer 1 output.
+
+    buf_capacity_list:         [1st level buffer size, 2nd level ...] (UNIT: Byte)
+    buf_access_cost_list:      [1st level mem per access cost, 2nd level ...] (UNIT: pJ)
+    buf_unit_static_cost_list: [1st level mem static cost per time unit, 2nd level ...] (UNIT: pJ)
+    para_count_list:           [1st level number of parallel units, 2nd level ...]
+    mac_capacity:              [0, 1], determines whether MAC can buffer 1 output. (UNIT: Element)
+    partition_mode:            (aka 'parallel mode' outside the class) determines hardware parallel template
+                               ['0' for no parallelism, only hierarchical memory fetch,
+                                '1' neighbour for parallel unit fetch,
+                                '2' for broadcast.]
+    array_access_cost:         (aka 'parallel cost' outside the class)
+                               per access cost of fetching data from neighborhood PE
+    array_dim:                 array dimension (right now support 1D & square-shape 2D)
+    utilization_threshold:     # of utilized unit / # of total units @ paralleled level
+    replication:               [True, False], whether allows another loop dimension (3rd) to be spatially unrolled
     '''
 
     def __init__(self, buf_capacity_list, buf_access_cost_list,
@@ -71,6 +84,7 @@ class Resource(object):
             buf_access_cost_list, buf_unit_static_cost_list)]
 
         self.num_levels = len(self.bufs)
+
         # Parallelism.
         array_access_costs = [None] * len(para_count_list)
         if not partition_mode :
@@ -85,12 +99,16 @@ class Resource(object):
                 if partition_mode[i] == 1 or partition_mode[i] == 2:
                     array_access_costs[i] = array_access_cost[array_level]
                     array_level += 1
- 
+
+        # "para_index" indicates which level do we have parallelism in
         self.para_index = [i for i, e in enumerate(para_count_list) if e != 1]
 
+        # 2D array is default setting for paralleled level
+        # Define 1D array in arch file manually if needed, e.g. "array_dim": [1, 1, 1] ([@ mem level 1, 2, 3])
         if not array_dim:
             array_dim = [2 if e != 1 else 1 for e in para_count_list]
 
+        # LMEI always assume square-shape array, could change later
         array_width = [para_count_list[i] if array_dim[i] == 1 else int(math.sqrt(para_count_list[i])) for i in xrange(self.num_levels)]
  
         self.paras = [Parallelism(*t) for t in zip(para_count_list, \

@@ -5,6 +5,16 @@ Schedule hint
 import loop_enum as le
 
 class Schedule(object):
+    '''
+    schedule_hint: {loop index:[[loop order,loop blocking,loop partitioning @ 1st level mem],[@ 2nd level mem],[3rd .]]}
+        loop blocking     ->  temporal loop size
+        loop partitioning ->  spatial loop size (spatial unrolling / parallelism)
+
+    partition_loops: the loops which are allowed to be replicated (on top of the defined loop partitioning)
+                     to improve HW utilization
+
+    hint_para_index: {mem level: [spatially unrolled loop indexes]}
+    '''
 
     def __init__(self, schedule_hint, partition_loops=None):
 

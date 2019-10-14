@@ -389,7 +389,7 @@ def get_of_bank_size(blocking_accum_list):
     '''
 
     return blocking_accum_list[le.OX] * blocking_accum_list[le.OY] * \
-    blocking_accum_list[le.OC] *blocking_accum_list[le.ON]
+    blocking_accum_list[le.OC] * blocking_accum_list[le.ON]
 
 
 def get_fl_bank_size(blocking_accum_list):
@@ -410,7 +410,7 @@ def get_array_access_and_cost(level, para, access_list, point):
     '''
 
     para_mode = para.access_mode
-    assert para_mode == 1 or para_mode == 2
+    assert para_mode == 1 or para_mode == 2 # Don't get it
 
     array_dim = para.array_dim
     para_count = para.array_width
@@ -446,7 +446,7 @@ def get_array_access_and_cost(level, para, access_list, point):
 
         array_access = [[array_if_block_access_nearest, array_of_block_access_nearest, array_fl_block_access_nearest]]
 
-        for i in xrange(array_dim):
+        for i in xrange(array_dim): # Don't get it
             if_partitions_far = partitions_far[i][le.FX] * partitions_far[i][le.FY] * partitions_far[i][le.OC]
             if_partitions_far = if_partitions_far if if_partitions_far != 1 else 0
             of_partitions_far = partitions_far[i][le.FX] * partitions_far[i][le.FY] * partitions_far[i][le.IC]
@@ -624,6 +624,11 @@ def get_block_sizes(num_levels, point, layer):
     return [bank_list, block_list]
 
 def fit_in_level(cap, blocks, invalid_underutilized):
+    '''
+    Check if the current level mem size >= current level loop blocking size
+    invalid_underutilized is used to exclude mapping points with too low memory utilization (< 50%)
+    #LMEI can later put the memory utilization threshold as a user defined parameter
+    '''
     total_size = sum(blocks)
     if invalid_underutilized:
         return (total_size <= cap) and (2*total_size >= cap)
@@ -644,10 +649,10 @@ def valid_partitioning_current_level(resource, point, layer, level, verbose=Fals
 def valid_mapping_point_current_level(resource, point, layer, level, verbose=False):
     if resource.paras[level].count > 1:
         valid_size = fit_in_level(resource.buffer(level).capacity,
-             get_bank_size(point, layer, level))
+             get_bank_size(point, layer, level), True)
     else :
         valid_size = fit_in_level(resource.buffer(level).capacity,
-             get_block_size(point, layer, level))
+             get_block_size(point, layer, level), True)
 
     partitioning = zip(*(point.loop_partitionings))
     valid_para = valid_partition_number(resource, partitioning, level)
@@ -703,7 +708,21 @@ def get_total_access_cost(resource, array_cost):
     return total_access_cost
 
 def get_array_level_cost(resource, point, layer_size, level, next_level_access, verbose=False):
-    # TODO add support for other access_mode
+    '''
+    Given next_level_access (above-level memory access)
+    calculate the current level (paralleled level) inter-PE data access
+    thus calculate the current level (paralleled level) inter-PE communication energy
+    i.e. the energy spent on interconnection
+
+    Specific to Systolic Array template.
+
+    level_access: [[close access for I/O/W],[far access on one dimension for I/O/W],[far access on another dimension]]
+    close access means data are passing from one PE to its neighbour PE
+    Far access means data need to jump from one PE to PEs far away from it.
+    Far jump happens because of dataflow spatial replication (e.g. 2D array -> kinds of 3D array)
+    '''
+
+    # TODO add support for other access_mode # don't get it
     # LMEI to distinguish O (partial sum) in buffer_access from A and W
 
     assert resource.paras[level].count and resource.paras[level].access_mode
@@ -722,6 +741,10 @@ def get_array_level_cost(resource, point, layer_size, level, next_level_access, 
 
 
 def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
+    '''
+    Get the energy from current level of memory access + inter-PE access
+    '''
+
     # LMEI to distinguish O (partial sum) in buffer_access from A and W
 
     layer_size = get_layer_size(layer)
@@ -747,7 +770,7 @@ def get_array_and_curr_level_cost(resource, point, layer, level, verbose=False):
 
 def get_level_cost(resource, point, layer, level, verbose=False):
     '''
-    Get the energy from certain level of memory access
+    Get the energy from current level of memory access
 
     #LMEI to distinguish O (partial sum) in buffer_access from A and W
     '''
@@ -763,7 +786,7 @@ def get_level_cost(resource, point, layer, level, verbose=False):
     level_cost = sum(buffer_access) * resource.access_cost[level]
 
     if verbose >= 3:
-        print "Level ", level, " access: ", level_access
+        print "Level", level, " access: ", level_access
     return level_cost
 
 

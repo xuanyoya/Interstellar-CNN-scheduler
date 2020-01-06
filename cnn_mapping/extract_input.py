@@ -14,7 +14,11 @@ def extract_arch_info(arch_file):
         "parallel_count list is invalid, too many or too few elements"
 
     num_bytes = data["precision"] / 8
-    capacity_list = [x / num_bytes for x in data["capacity"]]
+    
+    if type(data["capacity"][0]) is list: 
+        capacity_list = [ [x / num_bytes for x in data["capacity"][i]] for i in range(len(data["capacity"])) ]
+    else:
+        capacity_list = [x / num_bytes for x in data["capacity"] ]
     data["capacity"] = capacity_list
     if "static_cost" not in data:
         data["static_cost"] = [0, ] * data["mem_levels"]
@@ -36,9 +40,14 @@ def extract_arch_info(arch_file):
     if "array_dim" not in data:
         data["array_dim"] = None
     if "utilization_threshold" not in data:
-        data["utilization_threshold"] = 0.75
+        data["utilization_threshold"] = 0.0
     if "replication" not in data:
         data["replication"] = True
+    if "invalid_underutilized" not in data:
+        data["invalid_underutilized"] = True
+    if "memory_partitions" not in data:
+        data["memory_partitions"] = [[0,0,0],[0,0,0],[0,0,0]]
+    
 
     return data
 

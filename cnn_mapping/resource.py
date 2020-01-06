@@ -73,7 +73,7 @@ class Resource(object):
     def __init__(self, buf_capacity_list, buf_access_cost_list,
                  buf_unit_static_cost_list, para_count_list,  
                  mac_capacity=1, partition_mode=None, array_access_cost=None, 
-                 array_dim = None, utilization_threshold = 0.75, replication=True):
+                 array_dim = None, utilization_threshold = 0, replication=True,memory_partitions=[[0,0,0],[0,0,0],[0,0,0]],invalid_underutilized=True):
 
         # Buffers.
         assert len(buf_capacity_list) == len(buf_access_cost_list)
@@ -114,17 +114,26 @@ class Resource(object):
         self.paras = [Parallelism(*t) for t in zip(para_count_list, \
             partition_mode, array_access_costs, array_dim, array_width)]
         self.access_cost = buf_access_cost_list
+        # If list does not contain 3 separate access costs for (inputs, weights, psum)
+        # assume they all have the same cost
+        if type(buf_access_cost_list[0]) is not list:
+            self.access_cost = [ [x]*3 for x in buf_access_cost_list ]
         self.mac_capacity = mac_capacity
         self.array_access_cost = array_access_cost
         self.para_count_list = para_count_list
         self.utilization_threshold = utilization_threshold
+        self.memory_partitions = memory_partitions 
+        self.memory_partitions.append([None]*3)#do not check for invalid_underutilized at last memory level
         self.replication = replication
+        self.invalid_underutilized = invalid_underutilized
+        
+
 
     @classmethod
     def arch(cls, info):
         return cls(info["capacity"], info["access_cost"], info["static_cost"],
                         info["parallel_count"], info["mac_capacity"], info["parallel_mode"],
-                        info["parallel_cost"], info["array_dim"], info["utilization_threshold"], info["replication"])  
+                        info["parallel_cost"], info["array_dim"], info["utilization_threshold"], info["replication"],info["memory_partitions"], info['invalid_underutilized'])  
 
     def buffer_levels(self):
         '''

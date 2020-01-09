@@ -34,7 +34,15 @@ class Layer(object):
         assert self.wofm > 0
         assert self.hofm > 0
         assert self.nimg > 0
+        self.sizes = [wfil, hfil, wofm, hofm, nofm, nifm, nimg]
 
+    @classmethod
+    def layer(cls, info):
+        return cls(info["input_fmap_channel"], info["output_fmap_channel"], 
+                     info["fmap_width"], info["fmap_height"], info["window_width"],
+                     info["window_height"], info["batch_size"], 
+                     info["stride_width"], info["stride_height"]) 
+    
 class FCLayer(Layer):
     '''
     NN fully-connected layer parameters.

@@ -1,0 +1,31 @@
+{
+    "schedule_hint": {
+        "FX": {
+           "level0":{
+               "order":0,
+               "blocking_size":3,
+               "partitioning_size":1 
+           }
+        },
+        "FY": {
+           "level0":{
+               "order":2,
+               "blocking_size":1,
+               "partitioning_size":3 
+           }
+        },
+        "OY": {
+           "level0":{
+               "order":3,
+               "blocking_size":1,
+               "partitioning_size":13 
+           }
+        },
+        "OC": {
+           "level0":{
+               "order":4,
+               "partitioning_size":4
+           }
+        }
+    }
+}

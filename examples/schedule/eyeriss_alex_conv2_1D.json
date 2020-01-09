@@ -1,0 +1,10 @@
+{
+    "schedule_hint": {
+        "OY": {
+           "level0":{
+               "order":0,
+               "partitioning_size":14 
+           }
+        }
+    }
+}

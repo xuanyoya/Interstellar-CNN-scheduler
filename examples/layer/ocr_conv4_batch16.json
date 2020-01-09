@@ -1,0 +1,9 @@
+{
+    "fmap_width":60,
+    "fmap_height":6,
+    "input_fmap_channel":64,
+    "output_fmap_channel":128,
+    "window_width":3,
+    "window_height":3,
+    "batch_size":16
+}

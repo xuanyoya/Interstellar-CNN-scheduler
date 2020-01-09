@@ -1,0 +1,14 @@
+{
+    "mem_levels": 4,
+    "capacity":[8, 32, 131072, 1073741824],
+    "access_cost":[0.015 ,0.06, 30.75, 200],
+    "static_cost":[0, 0, 0, 0],
+    "parallel_count":[1, 256, 1, 1],
+    "mac_capacity":0,
+    "parallel_mode": [0, 1, 0, 0],
+    "parallel_cost":[0.035],
+    "capacity_scale":[2, 2],
+    "access_cost_scale":[2, 2],
+    "explore_points":[5, 5], 
+    "precision":16
+}

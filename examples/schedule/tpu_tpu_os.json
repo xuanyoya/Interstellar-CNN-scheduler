@@ -1,0 +1,16 @@
+{
+    "schedule_hint": {
+        "OX": {
+           "level0":{
+               "order":3,
+               "partitioning_size":112 
+           }
+        },
+        "OY": {
+           "level0":{
+               "order":4,
+               "partitioning_size":112
+           }
+        }
+    }
+}
